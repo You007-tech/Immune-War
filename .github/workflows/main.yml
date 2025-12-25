@@ -1,0 +1,37 @@
+
+name: Deploy
+on:
+  push:
+    branches: [ main ]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build and Install
+        run: |
+          # 这是一个关键补丁：自动检测 package.json 所在的目录
+          TARGET_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" -exec dirname {} \;)
+          echo "检测到项目位于目录: $TARGET_DIR"
+          cd "$TARGET_DIR"
+          npm install
+          npm run build
+          # 将构建产物移动到 Actions 预期的根目录
+          if [ "$TARGET_DIR" != "." ]; then
+            mv dist ../dist
+          fi
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
