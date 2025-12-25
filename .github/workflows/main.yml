@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          # 注意：这里删除了 cache: 'npm'，解决了您遇到的报错
       - name: Install and Build
         run: |
           npm install
