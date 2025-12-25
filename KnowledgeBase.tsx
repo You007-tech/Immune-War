@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { ROLES, GAME_OVERVIEW } from '../constants';
 import { RoleType, RoleData } from '../types';
-import { Shield, Skull, Users, BookOpen, Info, Globe2, Flag, User, Zap, Microscope, Target, Globe } from 'lucide-react';
+import { Shield, Skull, Users, BookOpen, Info, Globe2, Flag, Microscope, Target, Globe } from 'lucide-react';
 
 interface MechanicItem {
   title: string;
@@ -34,7 +33,6 @@ const KnowledgeBase: React.FC = () => {
     return 'bg-slate-900/20 border-slate-700 text-slate-400';
   };
 
-  // 使用显式类型转换确保循环变量身份明确
   const rolesArray = Object.values(ROLES) as RoleData[];
 
   return (
@@ -44,7 +42,7 @@ const KnowledgeBase: React.FC = () => {
           <BookOpen className="text-bio-highlight" />
           作战档案库
         </h2>
-        <p className="text-slate-400 max-w-2xl mx-auto italic">
+        <p className="text-slate-400 max-w-2xl mx-auto italic font-medium">
           查阅游戏核心机制、角色胜利条件以及可持续发展目标（SDGs）愿景。
         </p>
       </div>
@@ -57,14 +55,14 @@ const KnowledgeBase: React.FC = () => {
             onClick={() => setSelectedTab('OVERVIEW')}
             className={`w-full text-left p-4 rounded-xl border transition-all duration-300 flex items-center gap-4 group ${
               selectedTab === 'OVERVIEW'
-                ? 'bg-purple-500/20 border-purple-400'
+                ? 'bg-purple-500/20 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
                 : 'bg-bio-surface border-slate-700 hover:bg-slate-800'
             }`}
           >
             <Info className="w-8 h-8 text-purple-400" />
             <div>
               <div className="font-bold text-white">总体游戏机制</div>
-              <div className="text-xs text-slate-500">核心规则指南</div>
+              <div className="text-xs text-slate-500 font-bold">CORE RULES</div>
             </div>
           </button>
 
@@ -72,19 +70,19 @@ const KnowledgeBase: React.FC = () => {
             onClick={() => setSelectedTab('SDGS')}
             className={`w-full text-left p-4 rounded-xl border transition-all duration-300 flex items-center gap-4 group ${
               selectedTab === 'SDGS'
-                ? 'bg-blue-500/20 border-blue-400'
+                ? 'bg-blue-500/20 border-blue-400 shadow-[0_0_15px_rgba(14,165,233,0.2)]'
                 : 'bg-bio-surface border-slate-700 hover:bg-slate-800'
             }`}
           >
             <Globe className="w-8 h-8 text-blue-400" />
             <div>
               <div className="font-bold text-white">游戏体现SDGs</div>
-              <div className="text-xs text-slate-500">可持续发展目标</div>
+              <div className="text-xs text-slate-500 font-bold">SUSTAINABILITY</div>
             </div>
           </button>
 
           <div className="h-px bg-slate-800 my-4" />
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2">角色图鉴</h3>
+          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2 font-black">角色图鉴</h3>
 
           {rolesArray.map((role: RoleData) => (
             <button
@@ -92,14 +90,14 @@ const KnowledgeBase: React.FC = () => {
               onClick={() => setSelectedTab(role.id)}
               className={`w-full text-left p-4 rounded-xl border transition-all duration-300 flex items-center gap-4 group ${
                 selectedTab === role.id
-                  ? 'bg-bio-primary/20 border-bio-primary'
+                  ? 'bg-bio-primary/20 border-bio-primary shadow-[0_0_15px_rgba(14,165,233,0.2)]'
                   : 'bg-bio-surface border-slate-700 hover:bg-slate-800'
               }`}
             >
               {getIcon(role.id)}
               <div>
                 <div className="font-bold text-white">{role.name}</div>
-                <div className="text-xs text-slate-500">{role.faction}</div>
+                <div className="text-xs text-slate-500 font-bold">{role.faction}</div>
               </div>
             </button>
           ))}
@@ -117,7 +115,7 @@ const KnowledgeBase: React.FC = () => {
                 {GAME_OVERVIEW.mechanics.map((mech: MechanicItem, idx: number) => (
                   <div key={idx} className="bg-slate-900/50 p-5 rounded-xl border border-slate-700">
                     <h4 className="text-purple-300 font-bold mb-2 text-lg">{mech.title}</h4>
-                    <p className="text-slate-300 text-sm leading-relaxed">{mech.content}</p>
+                    <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{mech.content}</p>
                   </div>
                 ))}
               </div>
@@ -131,7 +129,7 @@ const KnowledgeBase: React.FC = () => {
                   <div key={idx} className={`p-5 rounded-xl border ${getSdgStyles(sdg.id)}`}>
                     <div className="font-black text-2xl mb-1 opacity-80">{sdg.id}</div>
                     <div className="font-bold text-white mb-2 text-lg">{sdg.title}</div>
-                    <p className="text-sm text-slate-300 leading-relaxed">{sdg.desc}</p>
+                    <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{sdg.desc}</p>
                   </div>
                 ))}
               </div>
@@ -148,11 +146,11 @@ const KnowledgeBase: React.FC = () => {
                   <p className="text-white font-bold text-lg">{ROLES[selectedTab as RoleType].victoryCondition}</p>
                 </div>
                 <div className="bg-slate-800/80 p-5 rounded-xl border border-slate-700">
-                  <h4 className="text-slate-400 font-bold mb-2 text-xs uppercase tracking-widest">角色介绍</h4>
-                  <p className="text-slate-200 text-sm">{ROLES[selectedTab as RoleType].description}</p>
+                  <h4 className="text-slate-400 font-bold mb-2 text-xs uppercase tracking-widest font-black">角色介绍</h4>
+                  <p className="text-slate-200 text-sm leading-relaxed">{ROLES[selectedTab as RoleType].description}</p>
                 </div>
                 <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 italic">
-                  <h4 className="text-bio-highlight font-bold mb-2 text-xs uppercase tracking-widest flex items-center gap-2">
+                  <h4 className="text-bio-highlight font-bold mb-2 text-xs uppercase tracking-widest flex items-center gap-2 font-black">
                     <Microscope size={14} /> 生物学原理
                   </h4>
                   <p className="text-slate-400 text-sm">{ROLES[selectedTab as RoleType].bioConcept}</p>
