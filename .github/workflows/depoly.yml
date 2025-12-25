@@ -1,0 +1,60 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Project
+        run: |
+          # 1. 递归寻找 package.json (跳过 node_modules)
+          FILE_PATH=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1)
+          if [ -z "$FILE_PATH" ]; then
+            echo "::error::未能在仓库中找到 package.json 文件，请检查目录结构！"
+            exit 1
+          fi
+          
+          # 2. 定位项目根目录
+          PROJECT_ROOT=$(dirname "$FILE_PATH")
+          echo "检测到项目位于：$PROJECT_ROOT"
+          
+          # 3. 执行安装与构建
+          cd "$PROJECT_ROOT"
+          npm install
+          npm run build
+          
+          # 4. 确保产物位于工作区根目录下的 dist
+          if [ "$PROJECT_ROOT" != "." ]; then
+            if [ -d "dist" ]; then
+              cp -r dist ../dist
+              echo "已将构建产物从 $PROJECT_ROOT/dist 移动到根目录"
+            else
+              echo "::error::构建成功但未发现 dist 目录！"
+              exit 1
+            fi
+          fi
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: "Deploying updated site (automated build)"
