@@ -19,33 +19,42 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Build Project
         run: |
-          # 查找 package.json
-          FILE_PATH=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1)
-          if [ -z "$FILE_PATH" ]; then
-            echo "Error: package.json not found"
+          # 检查 package.json 位置
+          if [ -f "package.json" ]; then
+            PROJECT_DIR="."
+          elif [ -f "src/package.json" ]; then
+            PROJECT_DIR="src"
+          else
+            # 最后的尝试：全量搜索
+            PROJECT_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1 | xargs dirname)
+          fi
+
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "::error::未发现 package.json，请检查仓库根目录是否存在此文件。"
             exit 1
           fi
-          PROJECT_ROOT=$(dirname "$FILE_PATH")
-          cd "$PROJECT_ROOT"
+
+          echo "项目路径：$PROJECT_DIR"
+          cd "$PROJECT_DIR"
           
-          # 安装依赖
           npm install
-          
-          # 构建项目
           npm run build
           
-          # 确保 dist 文件夹出现在根目录
-          if [ "$PROJECT_ROOT" != "." ]; then
+          # 确保 dist 目录回到根路径以便发布
+          if [ "$PROJECT_DIR" != "." ]; then
             mv dist ../dist
           fi
 
-      - name: Deploy
+      - name: Deploy to GitHub Pages Branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           publish_branch: gh-pages
           force_orphan: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
