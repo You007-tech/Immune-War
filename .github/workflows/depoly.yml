@@ -19,15 +19,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # 移除 cache: 'npm'，因为项目中没有 package-lock.json 会导致报错
 
       - name: Build Project
         run: |
-          # 确定 package.json 所在的目录
+          # 检查 package.json 位置
           if [ -f "package.json" ]; then
             PROJECT_DIR="."
-          elif [ -f "src/package.json" ]; then
-            PROJECT_DIR="src"
           else
             PROJECT_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1 | xargs dirname)
           fi
@@ -37,22 +34,27 @@ jobs:
             exit 1
           fi
 
-          echo "Detected project directory: $PROJECT_DIR"
           cd "$PROJECT_DIR"
           
-          # 执行安装和构建
+          # 如果没有 lock 文件，生成一个，解决 Actions 报错
+          if [ ! -f "package-lock.json" ]; then
+            npm install --package-lock-only
+          fi
+
           npm install
           npm run build
           
-          # 确保 dist 目录被正确放置在根目录以便部署
+          # 确保 dist 在根目录
           if [ "$PROJECT_DIR" != "." ]; then
             cp -r dist ../dist
           fi
 
-      - name: Deploy to GitHub Pages Branch
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           publish_branch: gh-pages
           force_orphan: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
