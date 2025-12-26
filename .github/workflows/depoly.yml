@@ -19,34 +19,34 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          # 移除 cache: 'npm'，因为项目中没有 package-lock.json 会导致报错
 
       - name: Build Project
         run: |
-          # 检查 package.json 位置
+          # 确定 package.json 所在的目录
           if [ -f "package.json" ]; then
             PROJECT_DIR="."
           elif [ -f "src/package.json" ]; then
             PROJECT_DIR="src"
           else
-            # 最后的尝试：全量搜索
             PROJECT_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1 | xargs dirname)
           fi
 
           if [ -z "$PROJECT_DIR" ]; then
-            echo "::error::未发现 package.json，请检查仓库根目录是否存在此文件。"
+            echo "Error: package.json not found"
             exit 1
           fi
 
-          echo "项目路径：$PROJECT_DIR"
+          echo "Detected project directory: $PROJECT_DIR"
           cd "$PROJECT_DIR"
           
+          # 执行安装和构建
           npm install
           npm run build
           
-          # 确保 dist 目录回到根路径以便发布
+          # 确保 dist 目录被正确放置在根目录以便部署
           if [ "$PROJECT_DIR" != "." ]; then
-            mv dist ../dist
+            cp -r dist ../dist
           fi
 
       - name: Deploy to GitHub Pages Branch
@@ -56,5 +56,3 @@ jobs:
           publish_dir: ./dist
           publish_branch: gh-pages
           force_orphan: true
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
