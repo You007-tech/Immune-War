@@ -1,12 +1,8 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { INITIAL_GREETING } from '../constants';
 import { soundEngine } from './SoundEngine';
-
-// 解决 TS 找不到 process 的问题
-declare var process: { env: { [key: string]: string | undefined } };
 
 const AIConsultant: React.FC = () => {
   const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([
@@ -27,6 +23,9 @@ const AIConsultant: React.FC = () => {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
+    // 优先从环境变量获取，如果没有则尝试从当前上下文获取
+    const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) || "";
+
     const userMessage = input;
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
@@ -34,7 +33,8 @@ const AIConsultant: React.FC = () => {
     soundEngine.playPhaseTransition();
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      // 只有在调用时才初始化，确保能拿到最新的 API_KEY
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: userMessage,
@@ -49,7 +49,7 @@ const AIConsultant: React.FC = () => {
 
     } catch (error) {
       console.error("AI Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "警告：神经网络突触连接中断。请检查网络环境或确认系统配置。" }]);
+      setMessages(prev => [...prev, { role: 'model', text: "警告：神经网络突触连接中断。提示：请确保已正确配置系统 API 密钥。" }]);
     } finally {
       setIsLoading(false);
     }
