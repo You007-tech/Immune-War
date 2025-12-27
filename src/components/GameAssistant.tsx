@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Player, RoleType, GamePhase, GameLog, GameStats } from './types';
-import { ROLES } from './constants';
+import { Player, RoleType, GamePhase, GameLog, GameStats } from '../types';
+import { ROLES } from '../constants';
 import { soundEngine } from './SoundEngine';
 import { Play, Skull, Shield, Activity, UserCircle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
