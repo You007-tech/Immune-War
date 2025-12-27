@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Book, LayoutDashboard, MessageSquare, HeartPulse, GraduationCap, Volume2, VolumeX, Globe } from 'lucide-react';
-import KnowledgeBase from './components/KnowledgeBase';
-import GameAssistant from './components/GameAssistant';
-import AIConsultant from './components/AIConsultant';
-import { soundEngine } from './components/SoundEngine';
+import KnowledgeBase from './KnowledgeBase';
+import GameAssistant from './GameAssistant';
+import AIConsultant from './AIConsultant';
+import { soundEngine } from './SoundEngine';
 
 enum Tab {
   HOME = 'HOME',
@@ -95,7 +94,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#020617] selection:bg-bio-primary/30 selection:text-bio-highlight">
-      {/* 导航栏 */}
       <nav className="border-b border-slate-800/60 bg-bio-dark/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
@@ -116,17 +114,14 @@ const App: React.FC = () => {
                 <NavButton active={activeTab === Tab.GAME} onClick={() => setActiveTab(Tab.GAME)} label="作战助手" icon={<LayoutDashboard size={18} />} />
                 <NavButton active={activeTab === Tab.AI} onClick={() => setActiveTab(Tab.AI)} label="AI 顾问" icon={<MessageSquare size={18} />} />
               </div>
-
               <div className="md:hidden flex gap-1 mr-2">
                 <IconButton active={activeTab === Tab.KNOWLEDGE} onClick={() => setActiveTab(Tab.KNOWLEDGE)} icon={<Book size={20} />} />
                 <IconButton active={activeTab === Tab.GAME} onClick={() => setActiveTab(Tab.GAME)} icon={<LayoutDashboard size={20} />} />
                 <IconButton active={activeTab === Tab.AI} onClick={() => setActiveTab(Tab.AI)} icon={<MessageSquare size={20} />} />
               </div>
-
               <button 
                 onClick={toggleAudio}
                 className={`p-3 rounded-xl transition-all ${isAudioEnabled ? 'bg-bio-primary/20 text-bio-primary shadow-lg shadow-bio-primary/10' : 'bg-slate-800 text-slate-500'}`}
-                title={isAudioEnabled ? "关闭神经声学同步" : "开启神经声学同步"}
               >
                 {isAudioEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
               </button>
@@ -134,27 +129,12 @@ const App: React.FC = () => {
           </div>
         </div>
       </nav>
-
-      {/* 主体内容 */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
         {renderContent()}
       </main>
-
-      {/* 页脚 */}
       <footer className="border-t border-slate-800/50 bg-slate-950/50 py-10 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="text-slate-500 text-sm flex items-center gap-4">
-              <span>© 2026 免疫战争项目组</span>
-              <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-              <span className="text-bio-primary font-semibold">支持联合国可持续发展目标</span>
-            </div>
-            <div className="flex gap-6">
-               <span title="SDG 3"><HeartPulse size={20} className="text-green-500/50" /></span>
-               <span title="SDG 4"><GraduationCap size={20} className="text-red-500/50" /></span>
-               <span title="SDG 17"><Globe size={20} className="text-blue-500/50" /></span>
-            </div>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-slate-500 text-sm">© 2026 免疫战争项目组 | 支持联合国可持续发展目标</p>
         </div>
       </footer>
     </div>
