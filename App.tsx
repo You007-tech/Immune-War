@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Book, LayoutDashboard, MessageSquare, HeartPulse, GraduationCap, Volume2, VolumeX, Globe } from 'lucide-react';
-import KnowledgeBase from './KnowledgeBase';
-import GameAssistant from './GameAssistant';
-import AIConsultant from './AIConsultant';
-import { soundEngine } from './SoundEngine';
+import KnowledgeBase from './components/KnowledgeBase';
+import GameAssistant from './components/GameAssistant';
+import AIConsultant from './components/AIConsultant';
+import { soundEngine } from './components/SoundEngine';
 
 enum Tab {
   HOME = 'HOME',
