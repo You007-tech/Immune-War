@@ -1,8 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, Loader2, ShieldAlert } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
-import { INITIAL_GREETING } from './constants';
+import { INITIAL_GREETING } from '../constants';
 import { soundEngine } from './SoundEngine';
 
 const AIConsultant: React.FC = () => {
@@ -31,23 +30,22 @@ const AIConsultant: React.FC = () => {
     soundEngine.playPhaseTransition();
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: userMessage,
         config: {
-          systemInstruction: "你是《免疫战争》助手。专业且简洁地回答游戏相关问题。禁止Markdown加粗。你的回答应该结合生物学原理和游戏规则。",
+          systemInstruction: "你是《免疫战争：病毒潜伏战》的游戏助手和生物学专家。你的任务是协助玩家理解游戏规则，并从免疫学角度分析博弈策略。请保持专业、简洁，多使用生物学隐喻。不要使用Markdown加粗。",
         },
       });
 
       const reply = response.text || "通信异常，无法解析生物信号。";
-      
       setMessages(prev => [...prev, { role: 'model', text: reply }]);
       soundEngine.playImmuneAlert();
 
     } catch (error: any) {
-      console.error("AI SDK Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "警告：中枢神经连接中断。请确保 API 配置正确。" }]);
+      console.error("Gemini API Error:", error);
+      setMessages(prev => [...prev, { role: 'model', text: "核心计算矩阵响应异常。请检查生物链路（API Key）是否配置正确。" }]);
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +72,7 @@ const AIConsultant: React.FC = () => {
           </div>
         ))}
         {isLoading && (
-          <div className="flex justify-start">
+          <div className="flex justify-start p-2">
             <Loader2 className="w-5 h-5 animate-spin text-bio-primary" />
           </div>
         )}
@@ -88,10 +86,14 @@ const AIConsultant: React.FC = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="下达查询指令..."
-            className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-bio-primary"
+            placeholder="下达查询指令或寻求战术建议..."
+            className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-bio-primary placeholder:text-slate-600"
           />
-          <button onClick={handleSend} disabled={isLoading} className="bg-bio-primary p-2 rounded-xl hover:bg-bio-highlight transition-colors">
+          <button 
+            onClick={handleSend} 
+            disabled={isLoading} 
+            className="bg-bio-primary p-2 rounded-xl hover:bg-bio-highlight transition-colors disabled:opacity-50"
+          >
             <Send size={18} />
           </button>
         </div>
