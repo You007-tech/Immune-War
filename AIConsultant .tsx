@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
-import { INITIAL_GREETING } from '../constants';
+import { Send, Bot, Loader2, ShieldAlert } from 'lucide-react';
+import { INITIAL_GREETING } from './constants';
 import { soundEngine } from './SoundEngine';
 
 const AIConsultant: React.FC = () => {
@@ -23,14 +22,6 @@ const AIConsultant: React.FC = () => {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    // 获取 API KEY：尝试从 process.env (Vite/Node 注入) 获取
-    const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) || "";
-
-    if (!apiKey) {
-      setMessages(prev => [...prev, { role: 'model', text: "系统错误：未检测到 API 密钥配置。请在部署环境的环境变量中设置 API_KEY。" }]);
-      return;
-    }
-
     const userMessage = input;
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
@@ -38,85 +29,68 @@ const AIConsultant: React.FC = () => {
     soundEngine.playPhaseTransition();
 
     try {
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: userMessage,
-        config: {
-          systemInstruction: "你是一款名为“免疫战争”的桌游助手。口吻专业。禁止使用Markdown加粗或列表符号。请使用纯文本分段回复。结合生物学解释游戏机制。"
-        }
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage })
       });
+
+      if (!response.ok) throw new Error('网络防御链路中断');
+
+      const data = await response.json();
+      const reply = data.text || "通信异常，无法解析生物信号。";
       
-      const reply = response.text || "系统信号弱，未生成有效答复。";
       setMessages(prev => [...prev, { role: 'model', text: reply }]);
       soundEngine.playImmuneAlert();
 
-    } catch (error) {
-      console.error("AI Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "警告：神经网络连接中断。请检查您的 API 密钥是否有效及是否已在 Google AI Studio 中正确配置。" }]);
+    } catch (error: any) {
+      console.error("AI Proxy Error:", error);
+      setMessages(prev => [...prev, { role: 'model', text: "警告：中枢神经连接中断。请检查后端代理配置及 API 密钥有效性。" }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-[650px] bg-slate-900 rounded-[2rem] border border-bio-primary/20 shadow-3xl overflow-hidden backdrop-blur-sm">
-      <div className="bg-gradient-to-r from-bio-primary/10 to-transparent p-6 border-b border-bio-primary/10 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-bio-primary/20 rounded-2xl">
-            <Bot className="w-6 h-6 text-bio-highlight" />
-          </div>
-          <div>
-            <h3 className="font-black text-white text-lg tracking-tight">战术生物学家 (AI)</h3>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">神经同步已激活</span>
-            </div>
-          </div>
+    <div className="flex flex-col h-[650px] glass-card rounded-[2rem] overflow-hidden shadow-2xl">
+      <div className="px-6 py-4 border-b border-bio-primary/20 bg-slate-900/40 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Bot className="text-bio-highlight" />
+          <span className="font-bold">战术指挥终端</span>
         </div>
+        <ShieldAlert size={16} className="text-bio-primary" />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
         {messages.map((msg, idx) => (
-          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}>
-            <div className={`max-w-[80%] rounded-[1.5rem] p-4 shadow-xl ${
-              msg.role === 'user' ? 'bg-bio-primary text-white rounded-br-none' : 'bg-slate-800/80 text-slate-200 rounded-bl-none border border-slate-700/50'
+          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[85%] p-4 rounded-2xl ${
+              msg.role === 'user' ? 'bg-bio-primary text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
             }`}>
-              <div className="flex items-center gap-2 mb-2 opacity-50 text-[10px] font-black uppercase tracking-widest">
-                {msg.role === 'user' ? <User size={12} /> : <Bot size={12} />}
-                <span>{msg.role === 'user' ? '指挥官' : '系统终端'}</span>
-              </div>
-              <p className="text-sm leading-relaxed whitespace-pre-wrap font-sans font-medium">{msg.text}</p>
+              <p className="text-sm leading-relaxed">{msg.text}</p>
             </div>
           </div>
         ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-slate-800/40 p-4 rounded-2xl rounded-bl-none flex items-center gap-3">
-              <Loader2 className="w-4 h-4 animate-spin text-bio-primary" />
-              <span className="text-[10px] text-slate-500 font-black tracking-widest uppercase">处理生物信号中...</span>
-            </div>
+            <Loader2 className="w-5 h-5 animate-spin text-bio-primary" />
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-6 bg-slate-950/80 border-t border-slate-800/50">
-        <div className="flex gap-3">
+      <div className="p-4 bg-slate-950/60 border-t border-slate-800">
+        <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="下达查询指令..."
-            className="flex-1 bg-slate-900 border border-slate-700 rounded-2xl px-5 py-3 text-sm text-white focus:outline-none focus:border-bio-primary"
+            className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-bio-primary"
           />
-          <button
-            onClick={handleSend}
-            disabled={isLoading}
-            className="bg-bio-primary hover:bg-sky-500 disabled:opacity-50 text-white w-12 h-12 flex items-center justify-center rounded-2xl transition-all shadow-lg active:scale-95"
-          >
-            <Send size={20} />
+          <button onClick={handleSend} disabled={isLoading} className="bg-bio-primary p-2 rounded-xl">
+            <Send size={18} />
           </button>
         </div>
       </div>
