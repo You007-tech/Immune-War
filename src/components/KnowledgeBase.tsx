@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ROLES, GAME_OVERVIEW } from './constants';
-import { RoleType, RoleData } from './types';
+import { ROLES, GAME_OVERVIEW } from '../constants';
+import { RoleType, RoleData } from '../types';
 import { Shield, Skull, Users, BookOpen, Info, Globe2, Flag, Microscope, Target, Globe } from 'lucide-react';
 
 const KnowledgeBase: React.FC = () => {
