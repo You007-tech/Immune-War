@@ -23,8 +23,13 @@ const AIConsultant: React.FC = () => {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    // 优先从环境变量获取，如果没有则尝试从当前上下文获取
+    // 获取 API KEY：尝试从 process.env (Vite/Node 注入) 获取
     const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) || "";
+
+    if (!apiKey) {
+      setMessages(prev => [...prev, { role: 'model', text: "系统错误：未检测到 API 密钥配置。请在部署环境的环境变量中设置 API_KEY。" }]);
+      return;
+    }
 
     const userMessage = input;
     setInput('');
@@ -33,7 +38,6 @@ const AIConsultant: React.FC = () => {
     soundEngine.playPhaseTransition();
 
     try {
-      // 只有在调用时才初始化，确保能拿到最新的 API_KEY
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -49,7 +53,7 @@ const AIConsultant: React.FC = () => {
 
     } catch (error) {
       console.error("AI Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "警告：神经网络突触连接中断。提示：请确保已正确配置系统 API 密钥。" }]);
+      setMessages(prev => [...prev, { role: 'model', text: "警告：神经网络连接中断。请检查您的 API 密钥是否有效及是否已在 Google AI Studio 中正确配置。" }]);
     } finally {
       setIsLoading(false);
     }
