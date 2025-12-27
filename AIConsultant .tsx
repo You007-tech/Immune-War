@@ -1,5 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, Loader2, ShieldAlert } from 'lucide-react';
+import { GoogleGenAI } from "@google/genai";
 import { INITIAL_GREETING } from './constants';
 import { soundEngine } from './SoundEngine';
 
@@ -29,23 +31,23 @@ const AIConsultant: React.FC = () => {
     soundEngine.playPhaseTransition();
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage })
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: userMessage,
+        config: {
+          systemInstruction: "你是《免疫战争》助手。专业且简洁地回答游戏相关问题。禁止Markdown加粗。你的回答应该结合生物学原理和游戏规则。",
+        },
       });
 
-      if (!response.ok) throw new Error('网络防御链路中断');
-
-      const data = await response.json();
-      const reply = data.text || "通信异常，无法解析生物信号。";
+      const reply = response.text || "通信异常，无法解析生物信号。";
       
       setMessages(prev => [...prev, { role: 'model', text: reply }]);
       soundEngine.playImmuneAlert();
 
     } catch (error: any) {
-      console.error("AI Proxy Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "警告：中枢神经连接中断。请检查后端代理配置及 API 密钥有效性。" }]);
+      console.error("AI SDK Error:", error);
+      setMessages(prev => [...prev, { role: 'model', text: "警告：中枢神经连接中断。请确保 API 配置正确。" }]);
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +69,7 @@ const AIConsultant: React.FC = () => {
             <div className={`max-w-[85%] p-4 rounded-2xl ${
               msg.role === 'user' ? 'bg-bio-primary text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
             }`}>
-              <p className="text-sm leading-relaxed">{msg.text}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
             </div>
           </div>
         ))}
@@ -89,7 +91,7 @@ const AIConsultant: React.FC = () => {
             placeholder="下达查询指令..."
             className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-bio-primary"
           />
-          <button onClick={handleSend} disabled={isLoading} className="bg-bio-primary p-2 rounded-xl">
+          <button onClick={handleSend} disabled={isLoading} className="bg-bio-primary p-2 rounded-xl hover:bg-bio-highlight transition-colors">
             <Send size={18} />
           </button>
         </div>
