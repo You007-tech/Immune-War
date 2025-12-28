@@ -1,3 +1,16 @@
+export enum GameMode {
+  BASIC = 'BASIC',
+  ADVANCED = 'ADVANCED'
+}
+
+export enum GamePhase {
+  SETUP = 'SETUP',
+  ROUND_START = 'ROUND_START',
+  SEAT_SWAP = 'SEAT_SWAP',
+  RESOLUTION = 'RESOLUTION',
+  ROUND_END = 'ROUND_END'
+}
+
 export enum RoleType {
   IMMUNE_CELL = 'IMMUNE_CELL',
   VIRUS = 'VIRUS',
@@ -8,8 +21,6 @@ export enum Faction {
   IMMUNE_SYSTEM = '免疫阵营',
   VIRUS_HORDE = '病毒阵营'
 }
-
-export type GameMode = 'BASIC' | 'ADVANCED';
 
 export interface RoleData {
   id: RoleType;
@@ -22,16 +33,8 @@ export interface RoleData {
   icon: string;
 }
 
-export enum GamePhase {
-  SETUP = 'SETUP',
-  ROUND_START = 'ROUND_START',
-  SEAT_SWAP = 'SEAT_SWAP',
-  RESOLUTION = 'RESOLUTION',
-  ROUND_END = 'ROUND_END'
-}
-
 export interface Player {
-  id: string; // 统一为 string
+  id: string; 
   pairId: number;
   name: string;
   role: RoleType;
