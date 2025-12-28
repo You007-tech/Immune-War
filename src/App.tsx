@@ -61,15 +61,15 @@ const App: React.FC = () => {
             </p>
             
             <div className="flex flex-wrap justify-center gap-4 mt-4">
-              <div className="flex items-center gap-2 bg-green-900/40 border border-green-500/50 px-5 py-2.5 rounded-full text-green-400 text-sm font-bold backdrop-blur-sm">
-                 <HeartPulse size={18} />
+              <div className="flex items-center gap-2 bg-green-900/40 border border-green-500/50 px-5 py-2.5 rounded-full text-green-400 text-sm font-bold backdrop-blur-sm shadow-lg shadow-green-900/20">
+                 <HeartPulse size={18} className="animate-pulse" />
                  SDG 3: 健康与福祉
               </div>
-              <div className="flex items-center gap-2 bg-red-900/40 border border-red-500/50 px-5 py-2.5 rounded-full text-red-400 text-sm font-bold backdrop-blur-sm">
+              <div className="flex items-center gap-2 bg-red-900/40 border border-red-500/50 px-5 py-2.5 rounded-full text-red-400 text-sm font-bold backdrop-blur-sm shadow-lg shadow-red-900/20">
                  <GraduationCap size={18} />
                  SDG 4: 优质教育
               </div>
-              <div className="flex items-center gap-2 bg-blue-900/40 border border-blue-500/50 px-5 py-2.5 rounded-full text-blue-400 text-sm font-bold backdrop-blur-sm">
+              <div className="flex items-center gap-2 bg-blue-900/40 border border-blue-500/50 px-5 py-2.5 rounded-full text-blue-400 text-sm font-bold backdrop-blur-sm shadow-lg shadow-blue-900/20">
                  <Globe size={18} />
                  SDG 17: 合作实现目标
               </div>
@@ -112,11 +112,11 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab(Tab.HOME)}>
-              <div className="p-2 bg-bio-primary/20 rounded-lg group-hover:bg-bio-primary/30">
+              <div className="p-2 bg-bio-primary/20 rounded-lg group-hover:bg-bio-primary/30 transition-colors">
                 <ShieldCheck className="text-bio-primary w-6 h-6" />
               </div>
               <div className="flex flex-col">
-                <span className="font-black text-lg text-white uppercase">Immune</span>
+                <span className="font-black text-lg tracking-tight text-white leading-none uppercase">Immune</span>
                 <span className="text-[10px] text-bio-primary font-bold tracking-[0.2em] uppercase">War 免疫战争</span>
               </div>
             </div>
@@ -128,7 +128,10 @@ const App: React.FC = () => {
                 <NavButton active={activeTab === Tab.GAME} onClick={startBasicGame} label="作战室" icon={<LayoutDashboard size={18} />} />
                 <NavButton active={activeTab === Tab.AI} onClick={() => setActiveTab(Tab.AI)} label="AI顾问" icon={<MessageSquare size={18} />} />
               </div>
-              <button onClick={toggleAudio} className={`p-3 rounded-xl ${isAudioEnabled ? 'bg-bio-primary/20 text-bio-primary' : 'bg-slate-800 text-slate-500'}`}>
+              <button 
+                onClick={toggleAudio}
+                className={`p-3 rounded-xl transition-all ${isAudioEnabled ? 'bg-bio-primary/20 text-bio-primary shadow-lg shadow-bio-primary/10' : 'bg-slate-800 text-slate-500'}`}
+              >
                 {isAudioEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
               </button>
             </div>
@@ -143,7 +146,12 @@ const App: React.FC = () => {
 };
 
 const NavButton: React.FC<{ active: boolean; onClick: () => void; label: string; icon?: React.ReactNode }> = ({ active, onClick, label, icon }) => (
-  <button onClick={onClick} className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 uppercase tracking-widest ${active ? 'bg-bio-primary text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+  <button
+    onClick={onClick}
+    className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${
+      active ? 'bg-bio-primary text-white shadow-lg shadow-bio-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+    }`}
+  >
     {icon}
     <span>{label}</span>
   </button>
