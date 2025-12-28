@@ -9,7 +9,7 @@ interface GameAssistantProps {
   mode: GameMode;
 }
 
-const GameAssistant: React.FC<GameAssistantProps> = ({ mode }) => {
+function GameAssistant({ mode }: GameAssistantProps) {
   const isAdvanced = mode === GameMode.ADVANCED;
   const [phase, setPhase] = useState<GamePhase>(GamePhase.SETUP);
   const [round, setRound] = useState(0);
@@ -186,7 +186,8 @@ const GameAssistant: React.FC<GameAssistantProps> = ({ mode }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[1, 2, 3, 4].map(pid => (
-              <div key={pid} className="bg-slate-800/50 p-5 rounded-2xl border border-slate-700">
+              <div key={pid} className="bg-slate-800/50 p-5 rounded-2xl border border-slate-700 shadow-inner">
+                <div className="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest border-b border-slate-700/50 pb-2">区域 {pid}</div>
                 <div className="flex gap-4">
                   {players.filter(p => p.pairId === pid).map(p => (
                     <div key={p.id} onClick={() => {
@@ -196,16 +197,16 @@ const GameAssistant: React.FC<GameAssistantProps> = ({ mode }) => {
                       } else if (isAdvanced && currentEventCard?.id === 'checkup') {
                         setRevealedPlayerId(p.id);
                       }
-                    }} className={`flex-1 p-4 rounded-xl border relative cursor-pointer ${selectedForSwap.includes(p.id) ? 'border-bio-primary bg-bio-primary/10' : 'border-slate-800 bg-slate-950'}`}>
+                    }} className={`flex-1 p-4 rounded-xl border transition-all duration-300 relative cursor-pointer ${selectedForSwap.includes(p.id) ? 'border-bio-primary bg-bio-primary/10 shadow-[0_0_15px_rgba(14,165,233,0.2)]' : 'border-slate-800 bg-slate-950 hover:bg-slate-900'}`}>
                       <div className="flex flex-col items-center gap-2">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${p.role === RoleType.IMMUNE_CELL ? 'text-blue-400' : p.role === RoleType.VIRUS ? 'text-red-400' : 'text-slate-500'}`}>
-                          {p.role === RoleType.IMMUNE_CELL ? <Shield size={16} /> : p.role === RoleType.VIRUS ? <Skull size={16} /> : <div className="text-[8px] font-bold">CELL</div>}
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform duration-300 ${selectedForSwap.includes(p.id) ? 'scale-110' : ''} ${p.role === RoleType.IMMUNE_CELL ? 'bg-blue-500/10 text-blue-400' : p.role === RoleType.VIRUS ? 'bg-red-500/10 text-red-400' : 'bg-slate-800 text-slate-500'}`}>
+                          {p.role === RoleType.IMMUNE_CELL ? <Shield size={18} /> : p.role === RoleType.VIRUS ? <Skull size={18} /> : <div className="text-[8px] font-bold">CELL</div>}
                         </div>
-                        <span className="text-[10px] font-bold text-slate-300">{p.name}</span>
-                        {p.immunityExpiresRound >= round && round > 0 && <Shield size={10} className="text-green-500 absolute top-2 right-2" />}
-                        {revealedPlayerId === p.id && <Eye size={10} className="text-amber-500 absolute top-2 left-2" />}
+                        <span className="text-[10px] font-bold text-slate-300 tracking-tight">{p.name}</span>
+                        {p.immunityExpiresRound >= round && round > 0 && <Shield size={10} className="text-green-500 absolute top-2 right-2 drop-shadow-sm" />}
+                        {revealedPlayerId === p.id && <Eye size={10} className="text-amber-500 absolute top-2 left-2 animate-pulse" />}
                         {phase === GamePhase.RESOLUTION && p.role === RoleType.CIVILIAN_CELL && players.some(pt => pt.pairId === pid && pt.id !== p.id && pt.role === RoleType.VIRUS) && (
-                          <button onClick={(e) => { e.stopPropagation(); infectPlayer(p.id); }} className="text-[8px] bg-red-600 px-2 py-1 rounded mt-1">感染</button>
+                          <button onClick={(e) => { e.stopPropagation(); infectPlayer(p.id); }} className="text-[8px] bg-red-600 hover:bg-red-500 px-2 py-1 rounded mt-1 font-black transition-colors">感染</button>
                         )}
                       </div>
                     </div>
@@ -217,44 +218,57 @@ const GameAssistant: React.FC<GameAssistantProps> = ({ mode }) => {
 
           <div className="mt-8 flex justify-end gap-4">
             {phase === GamePhase.SETUP ? (
-              <button onClick={startGame} className="px-8 py-4 bg-green-600 rounded-2xl font-black">启动仿真协议</button>
+              <button onClick={startGame} className="px-10 py-5 bg-green-600 hover:bg-green-500 rounded-2xl font-black shadow-lg shadow-green-900/20 transition-all active:scale-95">启动仿真协议</button>
             ) : (
               <div className="flex gap-4">
-                {selectedForSwap.length === 2 && swapCountThisRound < maxSwaps && <button onClick={executeSwap} className="px-6 py-4 bg-yellow-600 rounded-2xl font-black">执行迁移</button>}
-                <button onClick={nextPhase} className="px-8 py-4 bg-bio-primary rounded-2xl font-black flex items-center gap-2">进入下阶段 <Play size={18} /></button>
+                {selectedForSwap.length === 2 && swapCountThisRound < maxSwaps && <button onClick={executeSwap} className="px-6 py-4 bg-yellow-600 hover:bg-yellow-500 rounded-2xl font-black shadow-lg shadow-yellow-900/20 transition-all active:scale-95">确认迁移方案</button>}
+                <button onClick={nextPhase} className="px-8 py-4 bg-bio-primary hover:bg-sky-500 rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-sky-900/20 transition-all active:scale-95">进入下阶段 <Play size={18} /></button>
               </div>
             )}
           </div>
         </div>
-        <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 h-[250px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={stats}><CartesianGrid stroke="#1e293b" /><XAxis dataKey="round" /><YAxis /><Tooltip /><Line type="monotone" dataKey="virusCount" stroke="#f43f5e" strokeWidth={3} /></LineChart>
+        <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 h-[250px] shadow-xl">
+          <div className="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest">机体感染率实时监控</div>
+          <ResponsiveContainer width="100%" height="90%">
+            <LineChart data={stats}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <XAxis dataKey="round" stroke="#475569" fontSize={10} />
+              <YAxis stroke="#475569" fontSize={10} />
+              <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
+              <Line type="monotone" dataKey="virusCount" name="病毒载量" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4, fill: '#f43f5e' }} />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
-      <div className="bg-slate-900 rounded-[2rem] border border-slate-800 h-[750px] overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-slate-800 font-black text-xs text-slate-500 uppercase tracking-widest flex items-center gap-2"><Activity size={14} /> 终端日志</div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+      <div className="bg-slate-900 rounded-[2rem] border border-slate-800 h-[750px] overflow-hidden flex flex-col shadow-2xl">
+        <div className="p-4 border-b border-slate-800 font-black text-xs text-slate-500 uppercase tracking-widest flex items-center gap-2 bg-slate-950/50">
+          <Activity size={14} className="text-bio-primary" /> 终端作战日志
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-950/10">
+          {logs.length === 0 && <div className="text-slate-600 text-xs italic text-center mt-10">等待系统流同步...</div>}
           {logs.map((log, i) => (
-            <div key={i} className={`text-xs p-3 rounded-xl border-l-4 ${log.type === 'alert' ? 'border-red-500 bg-red-500/5' : 'border-bio-primary bg-bio-primary/5'}`}>
-              <div className="flex justify-between text-[10px] text-slate-500 font-bold mb-1"><span>{log.timestamp}</span><span>R{log.round}</span></div>
-              <div className="text-slate-200">{log.message}</div>
+            <div key={i} className={`text-[13px] p-3 rounded-xl border-l-4 shadow-sm animate-fade-in transition-all ${log.type === 'alert' ? 'border-red-500 bg-red-500/5' : 'border-bio-primary bg-bio-primary/5'}`}>
+              <div className="flex justify-between text-[10px] text-slate-500 font-bold mb-1 uppercase tracking-tighter">
+                <span>{log.timestamp}</span>
+                <span className="text-bio-highlight">ROUND {log.round}</span>
+              </div>
+              <div className="text-slate-200 font-medium leading-relaxed">{log.message}</div>
             </div>
           ))}
         </div>
       </div>
     </div>
   );
-};
+}
 
 const getPhaseLabel = (p: GamePhase) => {
   switch (p) {
-    case GamePhase.SETUP: return "系统部署";
-    case GamePhase.ROUND_START: return "稳态监控";
-    case GamePhase.SEAT_SWAP: return "细胞迁移";
-    case GamePhase.RESOLUTION: return "识别结算";
-    case GamePhase.ROUND_END: return "结果分析";
-    default: return "未就绪";
+    case GamePhase.SETUP: return "系统部署 DEPLOY";
+    case GamePhase.ROUND_START: return "稳态监控 MONITOR";
+    case GamePhase.SEAT_SWAP: return "细胞迁移 MIGRATION";
+    case GamePhase.RESOLUTION: return "识别结算 RESPONSE";
+    case GamePhase.ROUND_END: return "结果分析 ANALYZE";
+    default: return "未就绪 UNREADY";
   }
 };
 
