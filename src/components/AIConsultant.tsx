@@ -1,11 +1,11 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, Loader2, ShieldAlert } from 'lucide-react';
+import { Send, Bot, Loader2, Zap, Info } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
-import { INITIAL_GREETING } from './constants';
+import { INITIAL_GREETING, AI_KNOWLEDGE } from '../constants';
 import { soundEngine } from './SoundEngine';
 
 const AIConsultant: React.FC = () => {
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([
     { role: 'model', text: INITIAL_GREETING }
   ]);
@@ -21,81 +21,111 @@ const AIConsultant: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
+  const toggleMode = () => {
+    const nextMode = !isAdvancedMode;
+    setIsAdvancedMode(nextMode);
+    soundEngine.playPhaseTransition();
+    setMessages(prev => [...prev, { 
+      role: 'model', 
+      text: nextMode 
+        ? "【进阶模式已激活】现在我将利用“战术仿真矩阵”为您解析事件卡、上帝干预及高阶博弈策略。" 
+        : "【基础模式已激活】我们将专注于基础细胞交互、角色能力及游戏核心流程的解析。" 
+    }]);
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMessage = input;
+    const userMsg = input;
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setIsLoading(true);
     soundEngine.playPhaseTransition();
 
     try {
-      // Fix: Follow strictly the Gemini API client initialization guidelines
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: userMessage,
+        contents: userMsg,
         config: {
-          systemInstruction: "你是《免疫战争》助手。专业且简洁地回答游戏相关问题。禁止Markdown加粗。你的回答应该结合生物学原理和游戏规则。",
-        },
+          systemInstruction: isAdvancedMode 
+            ? "你是《免疫战争》进阶战术助手。回答关于事件卡、上帝干预和高阶推理逻辑的问题。结合本地战术库，提供有深度的建议。"
+            : "你是《免疫战争》基础助手。回答关于角色能力、胜负条件和基础流程的问题。简洁明了。",
+        }
       });
 
-      // Fix: Access response.text directly (it's a property, not a method)
-      const reply = response.text || "通信异常，无法解析生物信号。";
-      
-      setMessages(prev => [...prev, { role: 'model', text: reply }]);
+      const replyText = response.text || "通信异常，无法解析生物信号。";
+      setMessages(prev => [...prev, { role: 'model', text: replyText }]);
       soundEngine.playImmuneAlert();
-
-    } catch (error: any) {
-      console.error("AI SDK Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "警告：中枢神经连接中断。请确保 API 配置正确。" }]);
+    } catch (error) {
+      console.error(error);
+      // 降级回滚：使用本地匹配逻辑
+      let reply = "";
+      const currentKnowledge = isAdvancedMode ? AI_KNOWLEDGE.ADVANCED : AI_KNOWLEDGE.BASIC;
+      const match = currentKnowledge.find(k => 
+        k.keywords.some(kw => userMsg.toLowerCase().includes(kw.toLowerCase()))
+      );
+      
+      if (match) {
+        reply = match.response;
+      } else {
+        const otherKnowledge = isAdvancedMode ? AI_KNOWLEDGE.BASIC : AI_KNOWLEDGE.ADVANCED;
+        const otherMatch = otherKnowledge.find(k => 
+          k.keywords.some(kw => userMsg.toLowerCase().includes(kw.toLowerCase()))
+        );
+        if (otherMatch) {
+          reply = `${otherMatch.response}\n\n(提示：您当前处于${isAdvancedMode ? '进阶' : '基础'}模式，已为您从全局库检索)`;
+        } else {
+          reply = "本地分析终端暂未匹配到相关指令，请尝试换一种说法。";
+        }
+      }
+      setMessages(prev => [...prev, { role: 'model', text: reply }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-[650px] glass-card rounded-[2rem] overflow-hidden shadow-2xl">
-      <div className="px-6 py-4 border-b border-bio-primary/20 bg-slate-900/40 flex items-center justify-between">
+    <div className={`flex flex-col h-[700px] glass-card rounded-[2.5rem] overflow-hidden shadow-2xl border transition-all duration-500 ${isAdvancedMode ? 'border-rose-500/30' : 'border-bio-primary/20'}`}>
+      <div className="px-6 py-5 border-b border-white/5 bg-slate-950/40 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Bot className="text-bio-highlight" />
-          <span className="font-bold">战术指挥终端</span>
+          <Bot className={isAdvancedMode ? 'text-rose-400' : 'text-bio-highlight'} size={24} />
+          <div className="flex flex-col">
+            <span className="font-black tracking-widest text-sm uppercase text-white">AI 战术仿真终端</span>
+            <span className="text-[10px] text-slate-500 font-bold uppercase">{isAdvancedMode ? 'Advanced Ops' : 'Basic Logic'}</span>
+          </div>
         </div>
-        <ShieldAlert size={16} className="text-bio-primary" />
+        <button onClick={toggleMode} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg ${isAdvancedMode ? 'bg-rose-600 text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>
+          {isAdvancedMode ? <Zap size={14} className="fill-current" /> : <Info size={14} />}
+          {isAdvancedMode ? '进阶模式' : '基础模式'}
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-950/20">
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] p-4 rounded-2xl ${
-              msg.role === 'user' ? 'bg-bio-primary text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
+            <div className={`max-w-[85%] p-4 rounded-2xl shadow-md animate-fade-in ${
+              msg.role === 'user' 
+                ? (isAdvancedMode ? 'bg-rose-600' : 'bg-bio-primary') + ' text-white rounded-br-none' 
+                : 'bg-slate-800 text-slate-200 rounded-bl-none border border-white/5'
             }`}>
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{msg.text}</p>
             </div>
           </div>
         ))}
         {isLoading && (
-          <div className="flex justify-start">
-            <Loader2 className="w-5 h-5 animate-spin text-bio-primary" />
+          <div className="flex justify-start items-center gap-3 px-2">
+            <Loader2 className={`w-4 h-4 animate-spin ${isAdvancedMode ? 'text-rose-400' : 'text-bio-primary'}`} />
+            <span className="text-[10px] font-black uppercase opacity-50 tracking-tighter">Processing...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-slate-950/60 border-t border-slate-800">
+      <div className="p-4 bg-slate-950/80 border-t border-white/5">
         <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="下达查询指令..."
-            className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-bio-primary"
-          />
-          <button onClick={handleSend} disabled={isLoading} className="bg-bio-primary p-2 rounded-xl hover:bg-bio-highlight transition-colors">
-            <Send size={18} />
-          </button>
+          <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} placeholder={isAdvancedMode ? "输入战术指令（潜伏期、事件卡、上帝）..." : "询问规则（如：人数、感染、如何获胜）..."} className="flex-1 bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-bio-primary placeholder:text-slate-700" />
+          <button onClick={handleSend} disabled={isLoading} className={`p-3 rounded-xl transition-all ${isAdvancedMode ? 'bg-rose-600' : 'bg-bio-primary'}`}><Send size={20} className="text-white" /></button>
         </div>
       </div>
     </div>
