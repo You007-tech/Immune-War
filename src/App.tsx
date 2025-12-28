@@ -122,6 +122,11 @@ const App: React.FC = () => {
             </div>
             
             <div className="flex items-center gap-2">
+              <div className="flex md:hidden gap-1">
+                 <NavButton active={activeTab === Tab.HOME} onClick={() => setActiveTab(Tab.HOME)} label="主页" />
+                 <NavButton active={activeTab === Tab.KNOWLEDGE} onClick={() => setActiveTab(Tab.KNOWLEDGE)} label="规则" />
+                 <NavButton active={activeTab === Tab.GAME} onClick={startBasicGame} label="作战" />
+            </div>
               <div className="hidden md:flex gap-1 mr-4 border-r border-slate-800 pr-4">
                 <NavButton active={activeTab === Tab.HOME} onClick={() => setActiveTab(Tab.HOME)} label="主页" />
                 <NavButton active={activeTab === Tab.KNOWLEDGE} onClick={() => setActiveTab(Tab.KNOWLEDGE)} label="规则档案" icon={<Book size={18} />} />
@@ -138,7 +143,7 @@ const App: React.FC = () => {
           </div>
         </div>
       </nav>
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+      <main className="flex-grow min-h-[60vh] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
         {renderContent()}
       </main>
     </div>
