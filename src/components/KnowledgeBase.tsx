@@ -162,8 +162,8 @@ const KnowledgeBase: React.FC = () => {
           ))}
         </div>
 
-        {/* 右侧内容区域 - 在移动端占全宽 */}
-        <div className="lg:col-span-2 lg:col-span-3 h-full">
+        {/* 右侧内容区域 - 在桌面端占2列，在移动端占全宽 */}
+        <div className="lg:col-span-2 h-full">
           <div className="bg-bio-surface border border-slate-700 rounded-2xl p-6 md:p-8 h-full shadow-2xl overflow-hidden flex flex-col">
             {selectedTab === 'OVERVIEW' ? (
               <div className="overflow-y-auto pr-2 md:pr-4 custom-scrollbar h-full space-y-6">
