@@ -1,3 +1,11 @@
+export type GameMode = 'single' | 'multi';
+
+export interface Player {
+  id: string;
+  name: string;
+}
+
+export type GamePhase = 'init' | 'playing' | 'ended';
 export enum RoleType {
   IMMUNE_CELL = 'IMMUNE_CELL',
   VIRUS = 'VIRUS',
