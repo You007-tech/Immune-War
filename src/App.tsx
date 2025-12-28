@@ -16,7 +16,7 @@ enum Tab {
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.HOME);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
-  const [gameMode, setGameMode] = useState<GameMode>('BASIC');
+  const [gameMode, setGameMode] = useState<GameMode>(GameMode.BASIC);
 
   const toggleAudio = () => {
     const newVal = !isAudioEnabled;
@@ -28,12 +28,12 @@ const App: React.FC = () => {
   };
 
   const startBasicGame = () => {
-    setGameMode('BASIC');
+    setGameMode(GameMode.BASIC);
     setActiveTab(Tab.GAME);
   };
 
   const startAdvancedGame = () => {
-    setGameMode('ADVANCED');
+    setGameMode(GameMode.ADVANCED);
     setActiveTab(Tab.GAME);
   };
 
