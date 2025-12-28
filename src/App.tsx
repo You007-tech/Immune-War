@@ -126,6 +126,7 @@ const App: React.FC = () => {
                  <NavButton active={activeTab === Tab.HOME} onClick={() => setActiveTab(Tab.HOME)} label="主页" />
                  <NavButton active={activeTab === Tab.KNOWLEDGE} onClick={() => setActiveTab(Tab.KNOWLEDGE)} label="规则" />
                  <NavButton active={activeTab === Tab.GAME} onClick={startBasicGame} label="作战" />
+                 <NavButton active={activeTab === Tab.AI} onClick={() => setActiveTab(Tab.AI)} label="AI顾问" />
             </div>
               <div className="hidden md:flex gap-1 mr-4 border-r border-slate-800 pr-4">
                 <NavButton active={activeTab === Tab.HOME} onClick={() => setActiveTab(Tab.HOME)} label="主页" />
