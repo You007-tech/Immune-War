@@ -57,30 +57,30 @@ const App: React.FC = () => {
               病毒潜伏战 <span className="text-bio-accent font-bold">LATENCY WAR</span>
             </p>
             <p className="max-w-xl text-slate-400 leading-relaxed text-lg">
-              体验微观世界的博弈之美，通过节奏与策略理解生命防御系统，助力联合国 <span className="text-white font-semibold">SDGs</span> 全球可持续发展愿景。
+              体验微观世界的博弈之美，理解生命防御系统，助力联合国 <span className="text-white font-semibold">SDGs</span> 愿景。
             </p>
             
             <div className="flex flex-wrap justify-center gap-4 mt-4">
-              <div className="flex items-center gap-2 bg-green-900/40 border border-green-500/50 px-5 py-2.5 rounded-full text-green-400 text-sm font-bold backdrop-blur-sm shadow-lg shadow-green-900/20">
-                 <HeartPulse size={18} className="animate-pulse" />
+              <div className="flex items-center gap-2 bg-green-900/40 border border-green-500/50 px-5 py-2.5 rounded-full text-green-400 text-sm font-bold backdrop-blur-sm">
+                 <HeartPulse size={18} />
                  SDG 3: 健康与福祉
               </div>
-              <div className="flex items-center gap-2 bg-red-900/40 border border-red-500/50 px-5 py-2.5 rounded-full text-red-400 text-sm font-bold backdrop-blur-sm shadow-lg shadow-red-900/20">
+              <div className="flex items-center gap-2 bg-red-900/40 border border-red-500/50 px-5 py-2.5 rounded-full text-red-400 text-sm font-bold backdrop-blur-sm">
                  <GraduationCap size={18} />
                  SDG 4: 优质教育
               </div>
-              <div className="flex items-center gap-2 bg-blue-900/40 border border-blue-500/50 px-5 py-2.5 rounded-full text-blue-400 text-sm font-bold backdrop-blur-sm shadow-lg shadow-blue-900/20">
+              <div className="flex items-center gap-2 bg-blue-900/40 border border-blue-500/50 px-5 py-2.5 rounded-full text-blue-400 text-sm font-bold backdrop-blur-sm">
                  <Globe size={18} />
                  SDG 17: 合作实现目标
               </div>
             </div>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
-              <button onClick={startBasicGame} className="px-10 py-5 bg-bio-primary hover:bg-sky-500 text-white rounded-full font-black text-xl shadow-xl shadow-sky-900/40 transition-all hover:scale-105 active:scale-95">
+              <button onClick={startBasicGame} className="px-10 py-5 bg-bio-primary hover:bg-sky-500 text-white rounded-full font-black text-xl shadow-xl transition-all hover:scale-105 active:scale-95">
                 进入作战室
               </button>
               
-              <button onClick={startAdvancedGame} className="px-8 py-4 bg-gradient-to-r from-bio-accent to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-full font-black text-lg shadow-xl shadow-rose-900/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
+              <button onClick={startAdvancedGame} className="px-8 py-4 bg-gradient-to-r from-bio-accent to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-full font-black text-lg shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
                 <Zap size={20} className="fill-current" />
                 挑战进阶模式
               </button>
@@ -107,16 +107,16 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#020617] selection:bg-bio-primary/30 selection:text-bio-highlight">
+    <div className="min-h-screen flex flex-col bg-[#020617]">
       <nav className="border-b border-slate-800/60 bg-bio-dark/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab(Tab.HOME)}>
-              <div className="p-2 bg-bio-primary/20 rounded-lg group-hover:bg-bio-primary/30 transition-colors">
+              <div className="p-2 bg-bio-primary/20 rounded-lg group-hover:bg-bio-primary/30">
                 <ShieldCheck className="text-bio-primary w-6 h-6" />
               </div>
               <div className="flex flex-col">
-                <span className="font-black text-lg tracking-tight text-white leading-none uppercase">Immune</span>
+                <span className="font-black text-lg text-white uppercase">Immune</span>
                 <span className="text-[10px] text-bio-primary font-bold tracking-[0.2em] uppercase">War 免疫战争</span>
               </div>
             </div>
@@ -128,10 +128,7 @@ const App: React.FC = () => {
                 <NavButton active={activeTab === Tab.GAME} onClick={startBasicGame} label="作战室" icon={<LayoutDashboard size={18} />} />
                 <NavButton active={activeTab === Tab.AI} onClick={() => setActiveTab(Tab.AI)} label="AI顾问" icon={<MessageSquare size={18} />} />
               </div>
-              <button 
-                onClick={toggleAudio}
-                className={`p-3 rounded-xl transition-all ${isAudioEnabled ? 'bg-bio-primary/20 text-bio-primary shadow-lg shadow-bio-primary/10' : 'bg-slate-800 text-slate-500'}`}
-              >
+              <button onClick={toggleAudio} className={`p-3 rounded-xl ${isAudioEnabled ? 'bg-bio-primary/20 text-bio-primary' : 'bg-slate-800 text-slate-500'}`}>
                 {isAudioEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
               </button>
             </div>
@@ -141,22 +138,12 @@ const App: React.FC = () => {
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
         {renderContent()}
       </main>
-      <footer className="border-t border-slate-800/50 bg-slate-950/50 py-10 backdrop-blur-sm mt-auto">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-slate-500 text-xs tracking-widest uppercase font-bold">© 2026 Immune Defense Project | Sustainable Development Goals Support</p>
-        </div>
-      </footer>
     </div>
   );
 };
 
 const NavButton: React.FC<{ active: boolean; onClick: () => void; label: string; icon?: React.ReactNode }> = ({ active, onClick, label, icon }) => (
-  <button
-    onClick={onClick}
-    className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${
-      active ? 'bg-bio-primary text-white shadow-lg shadow-bio-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-    }`}
-  >
+  <button onClick={onClick} className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 uppercase tracking-widest ${active ? 'bg-bio-primary text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
     {icon}
     <span>{label}</span>
   </button>
