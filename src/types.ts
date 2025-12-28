@@ -1,4 +1,3 @@
-
 export enum RoleType {
   IMMUNE_CELL = 'IMMUNE_CELL',
   VIRUS = 'VIRUS',
@@ -10,14 +9,16 @@ export enum Faction {
   VIRUS_HORDE = '病毒阵营'
 }
 
+export type GameMode = 'BASIC' | 'ADVANCED';
+
 export interface RoleData {
   id: RoleType;
   name: string;
   faction: Faction;
   description: string;
-  bioConcept: string; // The real biology behind it
+  bioConcept: string;
   ability: string;
-  victoryCondition: string; // New field
+  victoryCondition: string;
   icon: string;
 }
 
@@ -31,10 +32,11 @@ export enum GamePhase {
 
 export interface Player {
   id: number;
-  pairId: number; // 1 to 4, representing the table/seat pair
+  pairId: number;
   name: string;
   role: RoleType;
-  immunityExpiresRound: number; // The round number until which the player is immune
+  immunityExpiresRound: number;
+  pendingInfectionRound?: number; // 进阶模式：延迟感染生效的轮次
   statusEffects: string[];
 }
 
