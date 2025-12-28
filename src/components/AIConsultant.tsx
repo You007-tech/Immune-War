@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, Loader2, Zap, Info } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
-import { INITIAL_GREETING, AI_KNOWLEDGE } from '../constants';
+import { AI_KNOWLEDGE } from '../constants';
+import { INITIAL_GREETING } from '../constants';
 import { soundEngine } from './SoundEngine';
 
 const AIConsultant: React.FC = () => {
