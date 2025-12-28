@@ -17,7 +17,6 @@ export enum Faction {
   VIRUS_HORDE = '病毒阵营'
 }
 
-export type GameMode = 'BASIC' | 'ADVANCED';
 
 export interface RoleData {
   id: RoleType;
