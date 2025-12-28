@@ -1,26 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, Loader2, ShieldCheck, Activity } from 'lucide-react';
-import { INITIAL_GREETING } from '../constants';
+import { Send, Bot, Loader2, Zap, Info, ShieldCheck } from 'lucide-react';
+import { INITIAL_GREETING, AI_KNOWLEDGE } from '../constants';
 import { soundEngine } from './SoundEngine';
 
-// 本地战术库
-const LOCAL_KNOWLEDGE = [
-  { keywords: ['赢', '获胜', '怎么玩', '胜利'], response: "根据博弈模型：免疫阵营需建立多点巡逻，通过换座打乱病毒的潜伏序列；病毒阵营需利用“细胞记忆”空档期进行链式感染。" },
-  { keywords: ['病毒', '感染', '潜伏'], response: "监测到病毒信号。病毒的制胜关键在于‘社交工程’——在换座方案表决中诱导指挥者，将自己安插在健康的体细胞群落旁。" },
-  { keywords: ['免疫', '医生', '细胞', '治愈'], response: "免疫细胞是唯一的治愈手段。建议在第二轮后，通过排除法锁定高疑点目标，利用换座机制强制与其对坐进行‘治愈清理’。" },
-  { keywords: ['换座', '指挥者', '方案'], response: "换座是防御屏障的重组。如果方案被否决两次，第三任指挥者将拥有绝对分配权，这是逆转局势的关键机会。" },
-  { keywords: ['规则', '机制'], response: "核心机制模拟真实免疫：治愈代表特异性识别，感染代表病毒的溶源性转换。这是微观世界每秒都在发生的战争。" }
-];
-
-const DEFAULT_RESPONSES = [
-  "正在通过生物特征识别分析当前博弈趋势...",
-  "战术矩阵扫描中：建议密切监控最近执行换座动作的玩家。",
-  "监测到异常代谢反应，疑似病毒正在尝试进行身份隐藏。",
-  "免疫记忆响应正常，目前机体稳态评级：良好。",
-  "指挥官，当前的社交矩阵分布存在结构性风险，建议调整防御策略。"
-];
-
 const AIConsultant: React.FC = () => {
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([
     { role: 'model', text: INITIAL_GREETING }
   ]);
@@ -36,6 +20,18 @@ const AIConsultant: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
+  const toggleMode = () => {
+    const nextMode = !isAdvancedMode;
+    setIsAdvancedMode(nextMode);
+    soundEngine.playPhaseTransition();
+    setMessages(prev => [...prev, { 
+      role: 'model', 
+      text: nextMode 
+        ? "【模式切换】已激活进阶战术顾问模式。现在我将针对事件卡、上帝干预等高阶博弈机制提供指导。" 
+        : "【模式切换】已回到基础战术模式。我们将专注于基础细胞交互与角色核心能力的分析。" 
+    }]);
+  };
+
   const handleSend = () => {
     if (!input.trim() || isLoading) return;
 
@@ -45,70 +41,102 @@ const AIConsultant: React.FC = () => {
     setIsLoading(true);
     soundEngine.playPhaseTransition();
 
-    // 模拟本地计算延迟，让它看起来像在思考
+    // 仿真离线计算延迟
     setTimeout(() => {
       let reply = "";
-      const match = LOCAL_KNOWLEDGE.find(k => k.keywords.some(kw => userMessage.toLowerCase().includes(kw)));
+      
+      // 搜索对应模式的知识库
+      const currentKnowledge = isAdvancedMode ? AI_KNOWLEDGE.ADVANCED : AI_KNOWLEDGE.BASIC;
+      
+      // 模糊匹配逻辑
+      const match = currentKnowledge.find(k => 
+        k.keywords.some(kw => userMessage.toLowerCase().includes(kw.toLowerCase()))
+      );
       
       if (match) {
         reply = match.response;
       } else {
-        reply = DEFAULT_RESPONSES[Math.floor(Math.random() * DEFAULT_RESPONSES.length)];
+        // 如果当前模式未找到，尝试在另一个模式找
+        const otherKnowledge = isAdvancedMode ? AI_KNOWLEDGE.BASIC : AI_KNOWLEDGE.ADVANCED;
+        const otherMatch = otherKnowledge.find(k => 
+          k.keywords.some(kw => userMessage.toLowerCase().includes(kw.toLowerCase()))
+        );
+
+        if (otherMatch) {
+          reply = `检测到跨模式指令。${otherMatch.response}\n\n(提示：您当前处于${isAdvancedMode ? '进阶' : '基础'}模式，已为您从全局库检索)`;
+        } else {
+          reply = isAdvancedMode 
+            ? "进阶逻辑扫描中... 建议针对“事件卡”对座位流动性的影响进行深度提问。"
+            : "生物特征分析中... 目前机体稳态维持较好，您可以尝试询问“如何获胜”、“感染逻辑”或“角色能力”。";
+        }
       }
 
       setMessages(prev => [...prev, { role: 'model', text: reply }]);
       setIsLoading(false);
       soundEngine.playImmuneAlert();
-    }, 1000);
+    }, 800);
   };
 
   return (
-    <div className="flex flex-col h-[650px] glass-card rounded-[2rem] overflow-hidden shadow-2xl border border-bio-primary/20">
-      <div className="px-6 py-4 border-b border-bio-primary/20 bg-slate-900/40 flex items-center justify-between">
+    <div className={`flex flex-col h-[700px] glass-card rounded-[2rem] overflow-hidden shadow-2xl border transition-all duration-500 ${isAdvancedMode ? 'border-rose-500/40 shadow-rose-900/10' : 'border-bio-primary/20'}`}>
+      <div className="px-6 py-4 border-b border-white/5 bg-slate-950/40 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Activity className="text-bio-highlight animate-pulse" size={20} />
-          <span className="font-bold tracking-widest text-sm uppercase">本地战术仿真终端</span>
+          <Bot className={isAdvancedMode ? 'text-rose-400' : 'text-bio-highlight'} size={24} />
+          <div className="flex flex-col">
+            <span className="font-bold tracking-widest text-sm uppercase">AI 战术顾问</span>
+            <span className="text-[9px] text-slate-500 font-bold uppercase">{isAdvancedMode ? 'Advanced Simulation' : 'Basic Logic'}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded border border-green-500/30">离线加密模式</span>
-        </div>
+        <button 
+          onClick={toggleMode}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg active:scale-95 ${
+            isAdvancedMode 
+              ? 'bg-rose-600 text-white shadow-rose-900/40' 
+              : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
+          }`}
+        >
+          {isAdvancedMode ? <Zap size={14} className="fill-current" /> : <Info size={14} />}
+          {isAdvancedMode ? '进阶模式' : '基础模式'}
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-950/20">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-950/10">
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] p-4 rounded-2xl shadow-lg animate-fade-in ${
-              msg.role === 'user' ? 'bg-bio-primary text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
+              msg.role === 'user' 
+                ? (isAdvancedMode ? 'bg-rose-600 text-white' : 'bg-bio-primary text-white') + ' rounded-br-none' 
+                : 'bg-slate-800 text-slate-200 rounded-bl-none border border-white/5'
             }`}>
               <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{msg.text}</p>
             </div>
           </div>
         ))}
         {isLoading && (
-          <div className="flex justify-start items-center gap-3 text-bio-primary px-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-xs font-bold tracking-tighter">分析中...</span>
+          <div className="flex justify-start items-center gap-3 px-2">
+            <Loader2 className={`w-4 h-4 animate-spin ${isAdvancedMode ? 'text-rose-400' : 'text-bio-primary'}`} />
+            <span className="text-xs font-bold tracking-tighter uppercase opacity-50">Analyzing...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-slate-950 border-t border-slate-800">
+      <div className="p-4 bg-slate-950/80 border-t border-white/5">
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="输入关键词进行仿真分析..."
-            className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-bio-primary placeholder:text-slate-600 transition-all"
+            placeholder={isAdvancedMode ? "输入进阶战术关键字（事件、上帝、潜伏期）..." : "下达战术指令（如：如何获胜、治愈、换座）..."}
+            className="flex-1 bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-bio-primary placeholder:text-slate-600 transition-all"
           />
           <button 
             onClick={handleSend} 
             disabled={isLoading} 
-            className="bg-bio-primary p-3 rounded-xl hover:bg-bio-highlight transition-all active:scale-90 disabled:opacity-50"
+            className={`p-3 rounded-xl transition-all active:scale-90 disabled:opacity-50 ${isAdvancedMode ? 'bg-rose-600' : 'bg-bio-primary'}`}
           >
-            <Send size={20} />
+            <Send size={20} className="text-white" />
           </button>
         </div>
       </div>
