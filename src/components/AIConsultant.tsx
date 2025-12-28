@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, Loader2, Zap, Info } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
-import { AI_KNOWLEDGE } from '../constants';
-import { INITIAL_GREETING } from '../constants';
+import { INITIAL_GREETING, AI_KNOWLEDGE } from '../constants';
 import { soundEngine } from './SoundEngine';
 
 const AIConsultant: React.FC = () => {
@@ -29,8 +28,8 @@ const AIConsultant: React.FC = () => {
     setMessages(prev => [...prev, { 
       role: 'model', 
       text: nextMode 
-        ? "【进阶模式已激活】现在我将利用“战术仿真矩阵”为您解析事件卡、上帝干预及高阶博弈策略。" 
-        : "【基础模式已激活】我们将专注于基础细胞交互、角色能力及游戏核心流程的解析。" 
+        ? "【进阶模式已激活】已加载博弈扩展包逻辑。我将针对事件卡影响、上帝（主持人）干预及高阶博弈策略为您提供深度战术支持。" 
+        : "【基础模式已激活】已切换回基础生物逻辑。我们将专注于基础规则、角色能力及游戏核心流程的解析。" 
     }]);
   };
 
@@ -44,23 +43,25 @@ const AIConsultant: React.FC = () => {
     soundEngine.playPhaseTransition();
 
     try {
+      // 严格遵守指南：使用具名参数初始化
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: userMsg,
         config: {
           systemInstruction: isAdvancedMode 
-            ? "你是《免疫战争》进阶战术助手。回答关于事件卡、上帝干预和高阶推理逻辑的问题。结合本地战术库，提供有深度的建议。"
-            : "你是《免疫战争》基础助手。回答关于角色能力、胜负条件和基础流程的问题。简洁明了。",
+            ? "你现在是《免疫战争》进阶战术 AI 顾问。你不仅精通基础规则，更深刻理解进阶博弈（事件卡、潜伏期延迟、双倍换座等）。请结合提供的知识库回答问题。语气专业且具有未来感，绝对禁止使用 Markdown 加粗。"
+            : "你现在是《免疫战争》基础战术助手。负责解析基础规则、角色能力和胜负逻辑。回答应简洁有力，直接引用规则，禁止 Markdown 加粗。",
         }
       });
 
-      const replyText = response.text || "通信异常，无法解析生物信号。";
+      // 严格遵守指南：直接访问 .text 属性
+      const replyText = response.text || "通信链路异常，无法解析生物脉冲信号。";
       setMessages(prev => [...prev, { role: 'model', text: replyText }]);
       soundEngine.playImmuneAlert();
     } catch (error) {
-      console.error(error);
-      // 降级回滚：使用本地匹配逻辑
+      console.error("Gemini API Error:", error);
+      // 自动降级：使用本地深度匹配逻辑
       let reply = "";
       const currentKnowledge = isAdvancedMode ? AI_KNOWLEDGE.ADVANCED : AI_KNOWLEDGE.BASIC;
       const match = currentKnowledge.find(k => 
@@ -77,7 +78,7 @@ const AIConsultant: React.FC = () => {
         if (otherMatch) {
           reply = `${otherMatch.response}\n\n(提示：您当前处于${isAdvancedMode ? '进阶' : '基础'}模式，已为您从全局库检索)`;
         } else {
-          reply = "本地分析终端暂未匹配到相关指令，请尝试换一种说法。";
+          reply = "本地分析终端暂未匹配到相关生物特征码，建议换一种指令或关键词重新尝试。";
         }
       }
       setMessages(prev => [...prev, { role: 'model', text: reply }]);
@@ -93,10 +94,10 @@ const AIConsultant: React.FC = () => {
           <Bot className={isAdvancedMode ? 'text-rose-400' : 'text-bio-highlight'} size={24} />
           <div className="flex flex-col">
             <span className="font-black tracking-widest text-sm uppercase text-white">AI 战术仿真终端</span>
-            <span className="text-[10px] text-slate-500 font-bold uppercase">{isAdvancedMode ? 'Advanced Ops' : 'Basic Logic'}</span>
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">{isAdvancedMode ? 'Advanced Ops' : 'Basic Logic'}</span>
           </div>
         </div>
-        <button onClick={toggleMode} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg ${isAdvancedMode ? 'bg-rose-600 text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>
+        <button onClick={toggleMode} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg active:scale-95 ${isAdvancedMode ? 'bg-rose-600 text-white shadow-rose-900/40' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:text-white'}`}>
           {isAdvancedMode ? <Zap size={14} className="fill-current" /> : <Info size={14} />}
           {isAdvancedMode ? '进阶模式' : '基础模式'}
         </button>
@@ -107,7 +108,7 @@ const AIConsultant: React.FC = () => {
           <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] p-4 rounded-2xl shadow-md animate-fade-in ${
               msg.role === 'user' 
-                ? (isAdvancedMode ? 'bg-rose-600' : 'bg-bio-primary') + ' text-white rounded-br-none' 
+                ? (isAdvancedMode ? 'bg-rose-600' : 'bg-bio-primary') + ' text-white rounded-br-none shadow-lg' 
                 : 'bg-slate-800 text-slate-200 rounded-bl-none border border-white/5'
             }`}>
               <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{msg.text}</p>
@@ -117,7 +118,7 @@ const AIConsultant: React.FC = () => {
         {isLoading && (
           <div className="flex justify-start items-center gap-3 px-2">
             <Loader2 className={`w-4 h-4 animate-spin ${isAdvancedMode ? 'text-rose-400' : 'text-bio-primary'}`} />
-            <span className="text-[10px] font-black uppercase opacity-50 tracking-tighter">Processing...</span>
+            <span className="text-[10px] font-black uppercase opacity-50 tracking-tighter">Analyzing Logic Matrix...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -125,8 +126,15 @@ const AIConsultant: React.FC = () => {
 
       <div className="p-4 bg-slate-950/80 border-t border-white/5">
         <div className="flex gap-2">
-          <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} placeholder={isAdvancedMode ? "输入战术指令（潜伏期、事件卡、上帝）..." : "询问规则（如：人数、感染、如何获胜）..."} className="flex-1 bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-bio-primary placeholder:text-slate-700" />
-          <button onClick={handleSend} disabled={isLoading} className={`p-3 rounded-xl transition-all ${isAdvancedMode ? 'bg-rose-600' : 'bg-bio-primary'}`}><Send size={20} className="text-white" /></button>
+          <input 
+            type="text" 
+            value={input} 
+            onChange={(e) => setInput(e.target.value)} 
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()} 
+            placeholder={isAdvancedMode ? "下达进阶战术指令 (事件卡、上帝职责)..." : "询问规则 (如何获胜、治愈、感染)..."} 
+            className="flex-1 bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-bio-primary placeholder:text-slate-700 transition-all focus:ring-1 focus:ring-bio-primary/30" 
+          />
+          <button onClick={handleSend} disabled={isLoading} className={`p-3 rounded-xl transition-all active:scale-90 ${isAdvancedMode ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-900/20' : 'bg-bio-primary hover:bg-sky-500 shadow-sky-900/20 shadow-lg'}`}><Send size={20} className="text-white" /></button>
         </div>
       </div>
     </div>
