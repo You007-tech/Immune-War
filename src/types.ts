@@ -1,11 +1,3 @@
-export type GameMode = 'single' | 'multi';
-
-export interface Player {
-  id: string;
-  name: string;
-}
-
-export type GamePhase = 'init' | 'playing' | 'ended';
 export enum RoleType {
   IMMUNE_CELL = 'IMMUNE_CELL',
   VIRUS = 'VIRUS',
@@ -17,6 +9,7 @@ export enum Faction {
   VIRUS_HORDE = '病毒阵营'
 }
 
+export type GameMode = 'BASIC' | 'ADVANCED';
 
 export interface RoleData {
   id: RoleType;
@@ -38,12 +31,12 @@ export enum GamePhase {
 }
 
 export interface Player {
-  id: number;
+  id: string; // 统一为 string
   pairId: number;
   name: string;
   role: RoleType;
   immunityExpiresRound: number;
-  pendingInfectionRound?: number; // 进阶模式：延迟感染生效的轮次
+  pendingInfectionRound?: number;
   statusEffects: string[];
 }
 
