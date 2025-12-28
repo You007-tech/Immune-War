@@ -8,7 +8,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 interface GameAssistantProps {
   mode: GameMode;
 }
-
+export default function GameAssistant({ mode }: GameAssistantProps) {
+  return <div>Game Assistant mode: {mode}</div>;
+}
 const GameAssistant: React.FC<GameAssistantProps> = ({ mode }) => {
   const isAdvanced = mode === 'ADVANCED';
   const [phase, setPhase] = useState<GamePhase>(GamePhase.SETUP);
