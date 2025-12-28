@@ -1,12 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
-import { Player, RoleType, GamePhase, GameLog, GameStats } from '../types';
-import { ROLES } from '../constants';
+import { Player, RoleType, GamePhase, GameLog, GameStats, GameMode } from '../types';
+import { ROLES, ADVANCED_RULES } from '../constants';
 import { soundEngine } from './SoundEngine';
-import { Play, Skull, Shield, Activity, UserCircle } from 'lucide-react';
+import { Play, Skull, Shield, Activity, UserCircle, Zap, AlertTriangle, Eye } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const GameAssistant: React.FC = () => {
+interface GameAssistantProps {
+  mode: GameMode;
+}
+
+const GameAssistant: React.FC<GameAssistantProps> = ({ mode }) => {
+  const isAdvanced = mode === 'ADVANCED';
   const [phase, setPhase] = useState<GamePhase>(GamePhase.SETUP);
   const [round, setRound] = useState(0);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -14,6 +18,11 @@ const GameAssistant: React.FC = () => {
   const [stats, setStats] = useState<GameStats[]>([]);
   const [selectedForSwap, setSelectedForSwap] = useState<number[]>([]);
   const [commanderId, setCommanderId] = useState<number | null>(null);
+  
+  // 进阶模式状态
+  const [currentEventCard, setCurrentEventCard] = useState<typeof ADVANCED_RULES.eventCards[0] | null>(null);
+  const [swapCountThisRound, setSwapCountThisRound] = useState(0);
+  const [revealedPlayerId, setRevealedPlayerId] = useState<number | null>(null);
 
   const addLog = (message: string, type: 'action' | 'system' | 'alert' = 'system') => {
     setLogs(prev => [{
@@ -44,12 +53,12 @@ const GameAssistant: React.FC = () => {
       });
     }
     setPlayers(initialPlayers);
-    addLog("生物神经网络初始化完成。8名玩家已分配角色。", 'system');
+    addLog(`生物神经网络初始化完成。${isAdvanced ? '【进阶模式】已激活' : '【基础模式】已激活'}。`, 'system');
   };
 
   useEffect(() => {
-    if (players.length === 0) initGame();
-  }, []);
+    initGame();
+  }, [mode]);
 
   const startGame = () => {
     soundEngine.playPhaseTransition();
@@ -59,28 +68,66 @@ const GameAssistant: React.FC = () => {
     setCommanderId(randomCommander);
     addLog(`=== 战斗开始：第一轮监测开启 ===`, 'alert');
     addLog(`本轮“指挥者”为：玩家 ${randomCommander + 1}`, 'system');
+    
+    if (isAdvanced) {
+      triggerRandomEvent();
+    }
     updateStats(1);
+  };
+
+  const triggerRandomEvent = () => {
+    const card = ADVANCED_RULES.eventCards[Math.floor(Math.random() * ADVANCED_RULES.eventCards.length)];
+    setCurrentEventCard(card);
+    addLog(`【事件触发：${card.name}】${card.effect}`, 'alert');
+    
+    // 立即生效的事件：药物治疗
+    if (card.id === 'medication') {
+      const virusPlayers = players.filter(p => p.role === RoleType.VIRUS);
+      if (virusPlayers.length > 0) {
+        const target = virusPlayers[Math.floor(Math.random() * virusPlayers.length)];
+        cureVirus(target.id);
+      } else {
+        addLog("机体现状：未发现可治疗的病毒载量。", 'system');
+      }
+    }
   };
 
   const nextPhase = () => {
     soundEngine.playPhaseTransition();
     if (phase === GamePhase.ROUND_START) {
       setPhase(GamePhase.SEAT_SWAP);
+      setSwapCountThisRound(0);
+      setRevealedPlayerId(null);
       soundEngine.playVirusStealth(); 
       addLog("阶段一【细胞迁移】：指挥者提议换座方案。", 'action');
     } else if (phase === GamePhase.SEAT_SWAP) {
       setPhase(GamePhase.RESOLUTION);
-      addLog("阶段二【特异性识别】：结算接触后果...", 'action');
+      addLog("阶段二【识别结算】：结算接触后果...", 'action');
       processInteractions();
     } else if (phase === GamePhase.RESOLUTION) {
       setPhase(GamePhase.ROUND_END);
       updateStats(round);
       checkVictory();
     } else if (phase === GamePhase.ROUND_END) {
+      // 检查延迟感染
+      if (isAdvanced) {
+        setPlayers(prev => prev.map(p => {
+          if (p.pendingInfectionRound === round) {
+            addLog(`【潜伏结束】玩家 ${p.id + 1} 的病毒转换现已生效。`, 'alert');
+            return { ...p, role: RoleType.VIRUS, pendingInfectionRound: undefined };
+          }
+          return p;
+        }));
+      }
+
       if (commanderId !== null) setCommanderId((commanderId + 1) % 8);
-      setRound(r => r + 1);
+      const nextRound = round + 1;
+      setRound(nextRound);
       setPhase(GamePhase.ROUND_START);
-      addLog(`=== 第 ${round + 1} 轮扫描开启 ===`, 'alert');
+      addLog(`=== 第 ${nextRound} 轮扫描开启 ===`, 'alert');
+      if (isAdvanced) {
+        triggerRandomEvent();
+      }
     }
   };
 
@@ -110,13 +157,14 @@ const GameAssistant: React.FC = () => {
     if (p1 && p2) {
       const p1Pair = p1.pairId;
       const p2Pair = p2.pairId;
-      setPlayers(players.map(p => {
+      setPlayers(prev => prev.map(p => {
         if (p.id === p1.id) return { ...p, pairId: p2Pair };
         if (p.id === p2.id) return { ...p, pairId: p1Pair };
         return p;
       }));
-      addLog(`执行方案：${p1.name} 与 ${p2.name} 交换位置。`, 'action');
+      addLog(`执行迁移：${p1.name} 与 ${p2.name} 交换位置。`, 'action');
       setSelectedForSwap([]);
+      setSwapCountThisRound(prev => prev + 1);
       soundEngine.playPhaseTransition();
     }
   };
@@ -151,13 +199,32 @@ const GameAssistant: React.FC = () => {
        addLog(`【免疫记忆】${target.name} 尚处保护期，无法被感染。`, 'alert');
        return;
     }
+    
     soundEngine.playInfectionWarning();
-    setPlayers(prev => prev.map(p => {
-      if (p.id === targetId) return { ...p, role: RoleType.VIRUS };
-      return p;
-    }));
-    addLog(`【新感染警报】${target.name} 已被感染。`, 'alert');
+    
+    if (isAdvanced && currentEventCard?.id === 'latency') {
+      setPlayers(prev => prev.map(p => {
+        if (p.id === targetId) return { ...p, pendingInfectionRound: round };
+        return p;
+      }));
+      addLog(`【新感染（潜伏）】病毒已侵入 ${target.name}，转换将在下一轮生效。`, 'alert');
+    } else {
+      setPlayers(prev => prev.map(p => {
+        if (p.id === targetId) return { ...p, role: RoleType.VIRUS };
+        return p;
+      }));
+      addLog(`【新感染警报】${target.name} 已被感染。`, 'alert');
+    }
   };
+
+  const handleReveal = (pid: number) => {
+    if (revealedPlayerId === null && isAdvanced && currentEventCard?.id === 'checkup') {
+      setRevealedPlayerId(pid);
+      addLog(`【身份核实】指挥者确认了玩家 ${pid + 1} 的身份。`, 'action');
+    }
+  };
+
+  const maxSwaps = (isAdvanced && currentEventCard?.id === 'inflammation') ? 2 : 1;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
@@ -165,6 +232,16 @@ const GameAssistant: React.FC = () => {
         <div className="bg-slate-900 p-8 rounded-[2rem] border border-bio-primary/20 shadow-2xl relative">
           <div className="flex items-center justify-between mb-8">
             <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${isAdvanced ? 'bg-rose-600 text-white' : 'bg-bio-primary/20 text-bio-primary'}`}>
+                  {isAdvanced ? 'Advanced Mode 进阶模式' : 'Basic Mode 基础模式'}
+                </span>
+                {isAdvanced && currentEventCard && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase bg-amber-500/20 text-amber-500 animate-pulse">
+                    <Zap size={10} /> {currentEventCard.name}
+                  </span>
+                )}
+              </div>
               <h2 className="text-4xl font-black text-white uppercase tracking-tighter">{getPhaseLabel(phase)}</h2>
               {commanderId !== null && phase !== GamePhase.SETUP && (
                 <div className="text-yellow-500 font-bold mt-2 flex items-center gap-2">
@@ -175,6 +252,7 @@ const GameAssistant: React.FC = () => {
             </div>
             <div className="text-5xl font-black text-slate-800">R{round < 10 ? `0${round}` : round}</div>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[1, 2, 3, 4].map(id => (
               <div key={id} className="bg-slate-800/50 rounded-2xl border border-slate-700 p-5">
@@ -183,17 +261,49 @@ const GameAssistant: React.FC = () => {
                   {players.filter(p => p.pairId === id).map(p => (
                     <div 
                       key={p.id}
-                      onClick={() => phase === GamePhase.SEAT_SWAP && setSelectedForSwap(prev => prev.includes(p.id) ? prev.filter(i => i !== p.id) : prev.length < 2 ? [...prev, p.id] : prev)}
-                      className={`flex-1 p-4 rounded-xl border transition-all cursor-pointer relative ${selectedForSwap.includes(p.id) ? 'border-bio-primary bg-bio-primary/10' : 'border-slate-800 bg-slate-950'}`}
+                      onClick={() => {
+                        if (phase === GamePhase.SEAT_SWAP) {
+                          if (selectedForSwap.includes(p.id)) {
+                            setSelectedForSwap(prev => prev.filter(i => i !== p.id));
+                          } else if (selectedForSwap.length < 2) {
+                            setSelectedForSwap(prev => [...prev, p.id]);
+                          }
+                        } else if (isAdvanced && currentEventCard?.id === 'checkup' && phase !== GamePhase.SETUP) {
+                          handleReveal(p.id);
+                        }
+                      }}
+                      className={`flex-1 p-4 rounded-xl border transition-all cursor-pointer relative 
+                        ${selectedForSwap.includes(p.id) ? 'border-bio-primary bg-bio-primary/10' : 'border-slate-800 bg-slate-950'}
+                        ${revealedPlayerId === p.id ? 'ring-2 ring-amber-500' : ''}
+                      `}
                     >
                       <div className="flex flex-col items-center gap-2 text-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${p.role === RoleType.IMMUNE_CELL ? 'bg-blue-500/10 text-blue-400' : p.role === RoleType.VIRUS ? 'bg-red-500/10 text-red-400' : 'bg-slate-800 text-slate-500'}`}>
-                          {p.role === RoleType.IMMUNE_CELL ? <Shield size={16} /> : p.role === RoleType.VIRUS ? <Skull size={16} /> : <div className="text-[8px] font-bold">CELL</div>}
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          p.role === RoleType.IMMUNE_CELL ? 'bg-blue-500/10 text-blue-400' : 
+                          p.role === RoleType.VIRUS ? 'bg-red-500/10 text-red-400' : 'bg-slate-800 text-slate-500'
+                        }`}>
+                          {p.role === RoleType.IMMUNE_CELL ? <Shield size={16} /> : 
+                           p.role === RoleType.VIRUS ? <Skull size={16} /> : 
+                           <div className="text-[8px] font-bold">CELL</div>}
                         </div>
                         <span className="text-[10px] font-bold text-slate-300 truncate w-full">{p.name}</span>
                         {p.immunityExpiresRound >= round && round > 0 && <Shield size={10} className="text-green-500 absolute top-2 right-2" />}
-                        {phase === GamePhase.RESOLUTION && p.role === RoleType.CIVILIAN_CELL && players.some(partner => partner.pairId === id && partner.id !== p.id && partner.role === RoleType.VIRUS) && (
-                          <button onClick={(e) => { e.stopPropagation(); infectPlayer(p.id); }} className="text-[8px] bg-red-600 px-2 py-1 rounded text-white font-bold mt-1 hover:bg-red-500">感染</button>
+                        {p.pendingInfectionRound === round && <Activity size={10} className="text-amber-500 absolute top-2 left-2 animate-ping" />}
+                        
+                        {revealedPlayerId === p.id && (
+                          <div className="absolute -top-1 -right-1 bg-amber-500 p-0.5 rounded-full shadow-lg">
+                            <Eye size={10} className="text-white" />
+                          </div>
+                        )}
+
+                        {phase === GamePhase.RESOLUTION && p.role === RoleType.CIVILIAN_CELL && 
+                          players.some(partner => partner.pairId === id && partner.id !== p.id && partner.role === RoleType.VIRUS) && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); infectPlayer(p.id); }} 
+                            className="text-[8px] bg-red-600 px-2 py-1 rounded text-white font-bold mt-1 hover:bg-red-500"
+                          >
+                            感染
+                          </button>
                         )}
                       </div>
                     </div>
@@ -202,21 +312,43 @@ const GameAssistant: React.FC = () => {
               </div>
             ))}
           </div>
-          <div className="mt-8 flex justify-end gap-4">
-            {phase === GamePhase.SETUP ? (
-              <button onClick={startGame} className="px-8 py-4 bg-green-600 rounded-2xl font-black hover:bg-green-500 transition-all active:scale-95 shadow-lg shadow-green-900/20">启动仿真协议</button>
-            ) : (
-              <div className="flex gap-4">
-                {phase === GamePhase.SEAT_SWAP && selectedForSwap.length === 2 && (
-                  <button onClick={executeSwap} className="px-6 py-4 bg-yellow-600 rounded-2xl font-black hover:bg-yellow-500 transition-all active:scale-95">确认迁移</button>
-                )}
-                <button onClick={nextPhase} className="px-8 py-4 bg-bio-primary rounded-2xl font-black flex items-center gap-3 hover:bg-sky-500 transition-all active:scale-95 shadow-lg shadow-sky-900/20">
-                  {phase === GamePhase.ROUND_END ? "开启下轮稳态扫描" : "进入下一阶段"} <Play size={20} />
-                </button>
-              </div>
-            )}
+
+          <div className="mt-8 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              {phase === GamePhase.SEAT_SWAP && (
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  迁移次数: {swapCountThisRound} / {maxSwaps}
+                </span>
+              )}
+            </div>
+            <div className="flex gap-4">
+              {phase === GamePhase.SETUP ? (
+                <button onClick={startGame} className="px-8 py-4 bg-green-600 rounded-2xl font-black hover:bg-green-500 transition-all active:scale-95 shadow-lg shadow-green-900/20">启动仿真协议</button>
+              ) : (
+                <div className="flex gap-4">
+                  {phase === GamePhase.SEAT_SWAP && selectedForSwap.length === 2 && swapCountThisRound < maxSwaps && (
+                    <button onClick={executeSwap} className="px-6 py-4 bg-yellow-600 rounded-2xl font-black hover:bg-yellow-500 transition-all active:scale-95">确认迁移</button>
+                  )}
+                  <button onClick={nextPhase} className="px-8 py-4 bg-bio-primary rounded-2xl font-black flex items-center gap-3 hover:bg-sky-500 transition-all active:scale-95 shadow-lg shadow-sky-900/20">
+                    {phase === GamePhase.ROUND_END ? "开启下轮稳态扫描" : "进入下一阶段"} <Play size={20} />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
+        {isAdvanced && currentEventCard && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 flex items-start gap-4 animate-fade-in shadow-xl shadow-amber-900/10">
+            <Zap className="text-amber-500 mt-1 shrink-0" size={24} />
+            <div>
+              <h4 className="font-black text-amber-500 uppercase tracking-tighter text-lg">{currentEventCard.name} 已生效</h4>
+              <p className="text-slate-300 text-sm font-medium leading-relaxed">{currentEventCard.effect}</p>
+              <p className="text-slate-500 text-[10px] italic mt-2">机理分析：{currentEventCard.bioLink}</p>
+            </div>
+          </div>
+        )}
+
         <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 h-[300px] shadow-xl">
            <div className="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest">流行病学趋势监控</div>
           <ResponsiveContainer width="100%" height="90%">
