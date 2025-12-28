@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Book, LayoutDashboard, MessageSquare, HeartPulse, GraduationCap, Volume2, VolumeX, Globe } from 'lucide-react';
+import { ShieldCheck, Book, LayoutDashboard, MessageSquare, HeartPulse, GraduationCap, Volume2, VolumeX, Globe, Zap } from 'lucide-react';
 import KnowledgeBase from './components/KnowledgeBase';
 import GameAssistant from './components/GameAssistant';
 import AIConsultant from './components/AIConsultant';
 import { soundEngine } from './components/SoundEngine';
+import { GameMode } from './types';
 
 enum Tab {
   HOME = 'HOME',
@@ -15,6 +16,7 @@ enum Tab {
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.HOME);
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  const [gameMode, setGameMode] = useState<GameMode>('BASIC');
 
   const toggleAudio = () => {
     const newVal = !isAudioEnabled;
@@ -23,6 +25,16 @@ const App: React.FC = () => {
     if (newVal) {
       soundEngine.playPhaseTransition();
     }
+  };
+
+  const startBasicGame = () => {
+    setGameMode('BASIC');
+    setActiveTab(Tab.GAME);
+  };
+
+  const startAdvancedGame = () => {
+    setGameMode('ADVANCED');
+    setActiveTab(Tab.GAME);
   };
 
   useEffect(() => {
@@ -51,7 +63,7 @@ const App: React.FC = () => {
             <div className="flex flex-wrap justify-center gap-4 mt-4">
               <div className="flex items-center gap-2 bg-green-900/40 border border-green-500/50 px-5 py-2.5 rounded-full text-green-400 text-sm font-bold backdrop-blur-sm shadow-lg shadow-green-900/20">
                  <HeartPulse size={18} className="animate-pulse" />
-                 SDG 3: 良好健康与福祉
+                 SDG 3: 健康与福祉
               </div>
               <div className="flex items-center gap-2 bg-red-900/40 border border-red-500/50 px-5 py-2.5 rounded-full text-red-400 text-sm font-bold backdrop-blur-sm shadow-lg shadow-red-900/20">
                  <GraduationCap size={18} />
@@ -59,16 +71,22 @@ const App: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 bg-blue-900/40 border border-blue-500/50 px-5 py-2.5 rounded-full text-blue-400 text-sm font-bold backdrop-blur-sm shadow-lg shadow-blue-900/20">
                  <Globe size={18} />
-                 SDG 17: 促进目标实现的伙伴关系
+                 SDG 17: 合作实现目标
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-4 mt-8">
-              <button onClick={() => setActiveTab(Tab.GAME)} className="px-10 py-5 bg-bio-primary hover:bg-sky-500 text-white rounded-full font-black text-xl shadow-xl shadow-sky-900/40 transition-all hover:scale-105 active:scale-95">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
+              <button onClick={startBasicGame} className="px-10 py-5 bg-bio-primary hover:bg-sky-500 text-white rounded-full font-black text-xl shadow-xl shadow-sky-900/40 transition-all hover:scale-105 active:scale-95">
                 进入作战室
               </button>
+              
+              <button onClick={startAdvancedGame} className="px-8 py-4 bg-gradient-to-r from-bio-accent to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-full font-black text-lg shadow-xl shadow-rose-900/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
+                <Zap size={20} className="fill-current" />
+                挑战进阶模式
+              </button>
+
               <button onClick={() => setActiveTab(Tab.KNOWLEDGE)} className="px-10 py-5 bg-slate-800/80 hover:bg-slate-700 text-white border border-slate-600 rounded-full font-black text-xl transition-all hover:scale-105 active:scale-95 backdrop-blur">
-                查阅档案库
+                查阅规则档案
               </button>
             </div>
           </div>
@@ -76,19 +94,15 @@ const App: React.FC = () => {
       case Tab.KNOWLEDGE:
         return <KnowledgeBase />;
       case Tab.GAME:
-        return <GameAssistant />;
+        return <GameAssistant mode={gameMode} />;
       case Tab.AI:
         return (
           <div className="max-w-3xl mx-auto">
-             <div className="mb-8 text-center">
-               <h2 className="text-3xl font-black text-white tracking-tight">AI 生物战术顾问</h2>
-               <p className="text-slate-400 mt-2">基于实时生物学大数据，为您提供规则分析与博弈策略</p>
-             </div>
              <AIConsultant />
           </div>
         );
       default:
-        return <div>请选择功能模块</div>;
+        return <div>模块加载中...</div>;
     }
   };
 
@@ -102,22 +116,17 @@ const App: React.FC = () => {
                 <ShieldCheck className="text-bio-primary w-6 h-6" />
               </div>
               <div className="flex flex-col">
-                <span className="font-black text-lg tracking-tight text-white leading-none">IMMUNE</span>
-                <span className="text-[10px] text-bio-primary font-bold tracking-[0.2em]">WAR 免疫战争</span>
+                <span className="font-black text-lg tracking-tight text-white leading-none uppercase">Immune</span>
+                <span className="text-[10px] text-bio-primary font-bold tracking-[0.2em] uppercase">War 免疫战争</span>
               </div>
             </div>
             
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-2">
               <div className="hidden md:flex gap-1 mr-4 border-r border-slate-800 pr-4">
                 <NavButton active={activeTab === Tab.HOME} onClick={() => setActiveTab(Tab.HOME)} label="主页" />
                 <NavButton active={activeTab === Tab.KNOWLEDGE} onClick={() => setActiveTab(Tab.KNOWLEDGE)} label="规则档案" icon={<Book size={18} />} />
-                <NavButton active={activeTab === Tab.GAME} onClick={() => setActiveTab(Tab.GAME)} label="作战助手" icon={<LayoutDashboard size={18} />} />
-                <NavButton active={activeTab === Tab.AI} onClick={() => setActiveTab(Tab.AI)} label="AI 顾问" icon={<MessageSquare size={18} />} />
-              </div>
-              <div className="md:hidden flex gap-1 mr-2">
-                <IconButton active={activeTab === Tab.KNOWLEDGE} onClick={() => setActiveTab(Tab.KNOWLEDGE)} icon={<Book size={20} />} />
-                <IconButton active={activeTab === Tab.GAME} onClick={() => setActiveTab(Tab.GAME)} icon={<LayoutDashboard size={20} />} />
-                <IconButton active={activeTab === Tab.AI} onClick={() => setActiveTab(Tab.AI)} icon={<MessageSquare size={20} />} />
+                <NavButton active={activeTab === Tab.GAME} onClick={startBasicGame} label="作战室" icon={<LayoutDashboard size={18} />} />
+                <NavButton active={activeTab === Tab.AI} onClick={() => setActiveTab(Tab.AI)} label="AI顾问" icon={<MessageSquare size={18} />} />
               </div>
               <button 
                 onClick={toggleAudio}
@@ -132,9 +141,9 @@ const App: React.FC = () => {
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
         {renderContent()}
       </main>
-      <footer className="border-t border-slate-800/50 bg-slate-950/50 py-10 backdrop-blur-sm">
+      <footer className="border-t border-slate-800/50 bg-slate-950/50 py-10 backdrop-blur-sm mt-auto">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-slate-500 text-sm">© 2026 免疫战争项目组 | 支持联合国可持续发展目标</p>
+          <p className="text-slate-500 text-xs tracking-widest uppercase font-bold">© 2026 Immune Defense Project | Sustainable Development Goals Support</p>
         </div>
       </footer>
     </div>
@@ -144,23 +153,12 @@ const App: React.FC = () => {
 const NavButton: React.FC<{ active: boolean; onClick: () => void; label: string; icon?: React.ReactNode }> = ({ active, onClick, label, icon }) => (
   <button
     onClick={onClick}
-    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+    className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 uppercase tracking-widest ${
       active ? 'bg-bio-primary text-white shadow-lg shadow-bio-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-800'
     }`}
   >
     {icon}
     <span>{label}</span>
-  </button>
-);
-
-const IconButton: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode }> = ({ active, onClick, icon }) => (
-  <button
-    onClick={onClick}
-    className={`p-3 rounded-xl transition-all ${
-      active ? 'bg-bio-primary text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-    }`}
-  >
-    {icon}
   </button>
 );
 
