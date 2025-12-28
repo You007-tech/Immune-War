@@ -44,8 +44,8 @@ const KnowledgeBase: React.FC = () => {
         </p>
       </div>
 
-      {/* 移动端下拉菜单 - 只在 lg 以下显示 */}
-      <div className="lg:hidden mb-6">
+      {/* 移动端下拉菜单 - 只在中小屏幕显示 */}
+      <div className="block lg:hidden mb-6">
         <div className="relative">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -132,9 +132,9 @@ const KnowledgeBase: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto lg:h-[700px]">
-        {/* 桌面端左侧目录 - 只在 lg 以上显示 */}
-        <div className="hidden lg:block lg:col-span-1 space-y-3 overflow-y-auto pr-2 custom-scrollbar">
+      <div className="block lg:grid lg:grid-cols-3 gap-6 h-auto lg:h-[700px]">
+        {/* 桌面端左侧目录 - 只在桌面端显示 */}
+        <div className="hidden lg:flex flex-col lg:col-span-1 space-y-3 overflow-y-auto pr-2 custom-scrollbar">
           <h3 className="text-lg font-black text-bio-primary uppercase tracking-widest mb-4 px-2">档案目录</h3>
           
           <button onClick={() => setSelectedTab('OVERVIEW')} className={`w-full text-left p-4 rounded-xl border transition-all duration-300 flex items-center gap-4 group ${selectedTab === 'OVERVIEW' ? 'bg-purple-500/20 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.15)]' : 'bg-bio-surface border-slate-700 hover:bg-slate-800'}`}>
